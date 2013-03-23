@@ -6,6 +6,7 @@ They are both in the same column.
 They can see each other diagonally i.e lie in a line inclined 45 degrees or 135 degrees to the base of board.
 But now the hatred has increased and the new condition is that no three of them should lie in any straight line (this line need not be aligned 45 degrees or 135 degrees to the base of chess board).
 """
+result = [] # this serves mainly as an index to avoid iteration
 
 def insert(r,N,b):
     """ insert a queen into row r of board b """ 
@@ -13,7 +14,8 @@ def insert(r,N,b):
     for c in range ( N):
         #insert queen in col c for row r 
         if(b[r][c] == 0):
-            b[r][c] = 1
+            #b[r][c] = 1
+            result.append(c)
             #cross_row(r,b) - we don't actually need to call this
             if r < (N-1):
                 cross_col(r + 1, c, N, b)
@@ -26,7 +28,8 @@ def insert(r,N,b):
                     uncross_col( r + 1, c, N , b)
                     uncross_diagon((r, c), N , b)
                     uncross_line((r, c), N,  b)
-                    b[r][c] = 0
+                    #b[r][c] = 0
+                    result.pop()
             else:
                 return True
     return False 
@@ -52,37 +55,39 @@ def uncross_col (start, c, N,  b):
 def cross_line( p,N, b ):
     """ TODO """
     #draw a line from the rest to this point, and cross out the board
+    if len (result) <= 1:
+        return
     x = p[0]
     y = p[1]
-    for  r in range (x):
-        for c in range (N):
-            if b[r][c] == 1:
-                dx = x - r
-                dy = y - c
-                (dx, dy) = get_slope(dx, dy)
-                r2 = x + dx
-                c2 = y + dy 
-                while ( r2 < N and c2 < N and c2 >= 0 ):
-                    b[r2][c2] -= 1
-                    r2 += dx 
-                    c2 += dy
+    for  r, c in enumerate(result[:-1]):
+        #for c in range (N):
+        #if b[r][c] == 1:
+        dx = x - r
+        dy = y - c
+        (dx, dy) = get_slope(dx, dy)
+        r2 = x + dx
+        c2 = y + dy 
+        while ( r2 < N and c2 < N and c2 >= 0 ):
+            b[r2][c2] -= 1
+            r2 += dx 
+            c2 += dy
 
 def uncross_line (p,N, b):
     """ TODO """
     x = p[0]
     y = p[1]
-    for r in range (x):
-        for c in range(N):
-            if b[r][c] == 1:
-                dx = x - r 
-                dy = y - c
-                (dx, dy) = get_slope(dx, dy)
-                r2 = x + dx 
-                c2 = y + dy
-                while r2 < N and c2 < N and c2 >= 0 : 
-                    b[r2][c2] += 1
-                    r2 += dx
-                    c2 += dy
+    for r , c in enumerate(result[:-1]) :
+        #for c in range(N):
+        #if b[r][c] == 1:
+        dx = x - r 
+        dy = y - c
+        (dx, dy) = get_slope(dx, dy)
+        r2 = x + dx 
+        c2 = y + dy
+        while r2 < N and c2 < N and c2 >= 0 : 
+            b[r2][c2] += 1
+            r2 += dx
+            c2 += dy
 
 def cross_diagon (p, N,  b):
     """ cross out diagon from point p """ 
@@ -100,10 +105,12 @@ def cross_diagon (p, N,  b):
         y -= 1
 def get_slope(dx, dy):
     """get slope """
-    n = abs(dx) if abs(dx) < abs(dy) else abs(dy) 
-    for i in reversed(range(2, n+1)):
-    #i = n
-    #while i >= 2 and i <= dx and i <= dy:
+    absx = abs(dx) 
+    absy = abs(dy)
+    n = absx if absx < absy else absy 
+    #for i in reversed(range(2, n+1)):
+    i = n
+    while i >= 2 and i <= absx and i <= absy:
         if dx % i == 0 and dy %i == 0:
             dx /= i
             dy /= i
@@ -112,12 +119,13 @@ def get_slope(dx, dy):
 
 def print_result(b):
     """ print result """ 
-    res = ""
-    for r in range (N):
-        for c in range (N):
-            if b[r][c] == 1: 
-                res += str(c + 1) + " " 
-    print res
+    #res = ""
+    #for r in range (N):
+    #    for c in range (N):
+    #        if b[r][c] == 1: 
+    #            res += str(c + 1) + " " 
+    #print result
+    print ' '.join(str(n + 1) for n in result)
 
 def print_verbose(b):
     for r in range (N):
