@@ -101,9 +101,9 @@ def cross_diagon (p, N,  b):
 def get_slope(dx, dy):
     """get slope """
     n = abs(dx) if abs(dx) < abs(dy) else abs(dy) 
-    #for i in reversed(range(2, n+1)):
-    i = n
-    while i >= 2 and i <= dx and i <= dy:
+    for i in reversed(range(2, n+1)):
+    #i = n
+    #while i >= 2 and i <= dx and i <= dy:
         if dx % i == 0 and dy %i == 0:
             dx /= i
             dy /= i
