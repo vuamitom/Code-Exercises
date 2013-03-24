@@ -7,7 +7,7 @@ They can see each other diagonally i.e lie in a line inclined 45 degrees or 135 
 But now the hatred has increased and the new condition is that no three of them should lie in any straight line (this line need not be aligned 45 degrees or 135 degrees to the base of chess board).
 """
 result = [] # this serves mainly as an index to avoid iteration
-
+cache = dict()
 def insert(r,N,b):
     """ insert a queen into row r of board b """ 
     #start = 0 if r > 0 else 1
@@ -55,8 +55,6 @@ def uncross_col (start, c, N,  b):
 def cross_line( p,N, b ):
     """ TODO """
     #draw a line from the rest to this point, and cross out the board
-    if len (result) <= 1:
-        return
     x = p[0]
     y = p[1]
     for  r, c in enumerate(result[:-1]):
@@ -103,6 +101,24 @@ def cross_diagon (p, N,  b):
         b[x][y] -= 1
         x += 1
         y -= 1
+
+def mem_cache(fn):
+    """mem_cache"""
+    def wrapper(x,y):
+        absx = abs(x) 
+        absy = abs(y)
+        res = cache.get((absx, absy),None)
+        if res is not None:
+            return (res[0]*x/absx, res[1]*y/absy)
+        res = cache.get((absy, absx),None)
+        if res is not None:
+            return (res[1]*x/absx, res[0]*y/absy)
+        res = fn(x, y)
+        cache[(absx, absy)] = (abs(res[0]), abs(res[1])) 
+        return res
+    return wrapper
+        
+@mem_cache
 def get_slope(dx, dy):
     """get slope """
     absx = abs(dx) 
@@ -148,10 +164,10 @@ def uncross_diagon (p,N, b):
         b[x][y] += 1
         x += 1
         y -= 1
-
+import sys
 
 if __name__ == "__main__":
-    N = int(raw_input(''))
+    N = int(sys.argv[1])#int(raw_input(''))
     b = [] 
     for i in range (N):
         b.append([])
