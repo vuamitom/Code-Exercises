@@ -9,6 +9,16 @@ But now the hatred has increased and the new condition is that no three of them 
 result = [] # this serves mainly as an index to avoid iteration
 #space = None
 cache = dict()
+def cross_lines(r,N,drop):
+    for y, x in enumerate(result):
+        for z, x2 in enumerate(result[(y+1):]):
+            y2 = z + y + 1
+            dx = x2 - x
+            dy = y2 - y
+            n = (r - y) * dx / float(dy)
+            if n - int(n) == 0 and x + n >= 0 and x + n < N:
+                drop.add(x + int(n))
+
 def insert(r,N):
     """ insert a queen into row r of board b """ 
     drop = set(result)
@@ -22,15 +32,7 @@ def insert(r,N):
             drop.add(c)
 
     #cross out lines intersections
-    for y, x in enumerate(result):
-        for z, x2 in enumerate(result[(y+1):]):
-            y2 = z + y + 1
-            dx = x2 - x 
-            dy = y2 - y
-            n = (r - y) * dx / float(dy) 
-            if n - int(n) == 0 and x + n >= 0 and x + n < N:
-                drop.add(x + int(n))
-
+    cross_lines(r,N,drop)
     #get possible columns
     for c in (x for x in space if x not in drop):
         result.append(c)
@@ -43,48 +45,20 @@ def insert(r,N):
             return True
     return False
 
-
-def mem_cache(fn):
-    """mem_cache"""
-    def wrapper(x,y):
-        absx = abs(x) 
-        absy = abs(y)
-        res = cache.get((absx, absy),None)
-        if res is not None:
-            return (res[0]*x/absx, res[1]*y/absy)
-        res = cache.get((absy, absx),None)
-        if res is not None:
-            return (res[1]*x/absx, res[0]*y/absy)
-        res = fn(x, y)
-        cache[(absx, absy)] = (abs(res[0]), abs(res[1])) 
-        return res
-    return wrapper
         
-@mem_cache
-def get_slope(dx, dy):
-    """get slope """
-    absx = abs(dx) 
-    absy = abs(dy)
-    n = absx if absx < absy else absy 
-    #for i in reversed(range(2, n+1)):
-    i = n
-    while i >= 2 and i <= absx and i <= absy:
-        if dx % i == 0 and dy %i == 0:
-            dx /= i
-            dy /= i
-        i-=1
-    return (dx, dy)
-
 def print_result():
     """ print result """ 
     print ' '.join(str(n + 1) for n in result)
 
 import sys
-
+from prime_sieve import get_primes
 if __name__ == "__main__":
     N = int(sys.argv[1])#int(raw_input(''))
     global space
     space = range (N)
+    global primes
+    primes = get_primes(N)
+   
     if(insert(0,N)):
         print_result()
         #print_verbose(b)

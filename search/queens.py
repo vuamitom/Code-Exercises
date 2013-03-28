@@ -20,14 +20,16 @@ def insert(r,N,b):
             if r < (N-1):
                 cross_col(r + 1, c, N, b)
                 cross_diagon((r , c), N, b)
-                cross_line((r, c), N , b)
+                drop = cross_line((r, c), N , b)
                 if(insert( r + 1, N , b)):
                     return True  
                 else: 
                     # unroll the operations - go for this instead of keeping a copy of the matrix
                     uncross_col( r + 1, c, N , b)
                     uncross_diagon((r, c), N , b)
-                    uncross_line((r, c), N,  b)
+                    #uncross_line((r, c), N,  b)
+                    for (y,x) in drop:
+                        b[y][x] +=1 
                     #b[r][c] = 0
                     result.pop()
             else:
@@ -57,6 +59,7 @@ def cross_line( p,N, b ):
     #draw a line from the rest to this point, and cross out the board
     x = p[0]
     y = p[1]
+    drop = []
     for  r, c in enumerate(result[:-1]):
         #for c in range (N):
         #if b[r][c] == 1:
@@ -67,8 +70,10 @@ def cross_line( p,N, b ):
         c2 = y + dy 
         while ( r2 < N and c2 < N and c2 >= 0 ):
             b[r2][c2] -= 1
+            drop.append((r2,c2))
             r2 += dx 
             c2 += dy
+    return drop
 
 def uncross_line (p,N, b):
     """ TODO """
@@ -107,30 +112,38 @@ def mem_cache(fn):
     def wrapper(x,y):
         absx = abs(x) 
         absy = abs(y)
-        res = cache.get((absx, absy),None)
-        if res is not None:
-            return (res[0]*x/absx, res[1]*y/absy)
-        res = cache.get((absy, absx),None)
-        if res is not None:
-            return (res[1]*x/absx, res[0]*y/absy)
-        res = fn(x, y)
-        cache[(absx, absy)] = (abs(res[0]), abs(res[1])) 
-        return res
+        if(absx < absy):
+            res = cache.get((absx, absy),None)
+            if res is not None:
+                return (res[0]*x/absx, res[1]*y/absy)
+            else:
+                res = fn(x,y)
+                cache[(absx,absy)] = (abs(res[0]),abs(res[1]))
+                return res
+        else:
+            res = cache.get((absy, absx),None)
+            if res is not None:
+                return (res[1]*x/absx, res[0]*y/absy)
+            else:
+                res = fn(x, y)
+                cache[(absy, absx)] = (abs(res[1]), abs(res[0])) 
+                return res
     return wrapper
         
 @mem_cache
 def get_slope(dx, dy):
     """get slope """
-    absx = abs(dx) 
-    absy = abs(dy)
-    n = absx if absx < absy else absy 
     #for i in reversed(range(2, n+1)):
-    i = n
-    while i >= 2 and i <= absx and i <= absy:
-        if dx % i == 0 and dy %i == 0:
+    p = 0
+    i = primes[p]
+    while i <= abs(dx) and i <= abs(dy):
+        while dx % i == 0 and dy %i == 0:
             dx /= i
             dy /= i
-        i-=1
+        p += 1
+        if p >= len(primes):
+            break
+        i = primes[p]
     return (dx, dy)
 
 def print_result(b):
@@ -164,16 +177,36 @@ def uncross_diagon (p,N, b):
         b[x][y] += 1
         x += 1
         y -= 1
-import sys
-
-if __name__ == "__main__":
+import time
+def profile(fn):
+    def with_profile (*args, **kwargs):
+        start_time = time.time()
+        ret = fn(*args, **kwargs)
+        elapsed = time.time() - start_time
+        print "Function %s finished in %.3f"%(fn.__name__, elapsed)
+        return ret
+    return with_profile
+    
+@profile
+def solve_queens(N):
     N = int(sys.argv[1])#int(raw_input(''))
-    b = [] 
+    b = []
     for i in range (N):
         b.append([])
         for j in range (N):
             b[i].append(0)
+    global primes
+    primes = get_primes(N)
+    if(insert(0,N,b)):
+        return b
+    else:
+        return None
 
-    if(insert(0, N, b)):
+import sys
+from prime_sieve import get_primes
+if __name__ == "__main__":
+    N = int(sys.argv[1])#int(raw_input(''))
+    b = solve_queens(N)
+    if b is not None:
         print_result(b)
         #print_verbose(b)
