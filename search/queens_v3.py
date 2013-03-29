@@ -10,6 +10,9 @@ result = [] # this serves mainly as an index to avoid iteration
 cache = dict()
 def insert(r,N,b):
     """ insert a queen into row r of board b """ 
+    if flag.value > 0 : 
+        return True
+
     #start = 0 if r > 0 else 1
     for c in range ( N):
         #insert queen in col c for row r 
@@ -21,20 +24,34 @@ def insert(r,N,b):
                 cross_col(r + 1, c, N, b)
                 cross_diagon((r , c), N, b)
                 drop = cross_line((r, c), N , b)
+                if (r+1) == N/2:
+                    pool.apply_async(queen_worker, [r, N, b, result])
+                    uncross_col( r + 1, c, N , b)
+                    uncross_diagon((r, c), N , b)
+                    for (y,x) in drop:
+                        b[y][x] +=1
+                    result.pop()
+                    return False
                 if(insert( r + 1, N , b)):
                     return True  
                 else: 
                     # unroll the operations - go for this instead of keeping a copy of the matrix
                     uncross_col( r + 1, c, N , b)
                     uncross_diagon((r, c), N , b)
+                    #uncross_line((r, c), N,  b)
                     for (y,x) in drop:
                         b[y][x] +=1 
+                    #b[r][c] = 0
                     result.pop()
             else:
                 return True
     return False 
 
-    
+def queen_worker(r, N, b, state):
+    global result
+    result = state
+    if insert(r, N, b):
+        flag.value = 1
 
 def cross_row(r, b):
     """ don't need this """ 
@@ -200,11 +217,22 @@ def solve_queens(N):
     else:
         return None
 
+def _initProcess(shared_var):
+    global flag 
+    flag = shared_var
 import sys
 from prime_sieve import get_primes
+from multiprocessing import Process, Value, Pool
+
 if __name__ == "__main__":
     N = int(sys.argv[1])#int(raw_input(''))
+    global flag
+    flag = Value('i', 0)
+    global pool 
+    pool = Pool(processes=4,initializer=_initProcess,initargs=(flag,))
+
     b = solve_queens(N)
+
     if b is not None:
         print_result(b)
         #print_verbose(b)

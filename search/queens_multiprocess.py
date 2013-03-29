@@ -7,7 +7,6 @@ They can see each other diagonally i.e lie in a line inclined 45 degrees or 135 
 But now the hatred has increased and the new condition is that no three of them should lie in any straight line (this line need not be aligned 45 degrees or 135 degrees to the base of chess board).
 """
 result = [] # this serves mainly as an index to avoid iteration
-from multiprocessing import Pool
 
 def cross_line_worker(x,y,points, N):
     drop = set()
@@ -23,32 +22,30 @@ def cross_line_worker(x,y,points, N):
             #drop.append(x + int(n))
     return drop
 
-pool = Pool(processes=4)
-#space = None
 cache = dict()
+
+def queen_worker(task_queue, result_queue):
+    while(True):
+        try:
+            task = task_queue.pop()
+            if task is not None:
+                #do smth
+                drop = cross_line_worker(task[0],task[1],task[2],task[3])
+                result_queue.append(drop)
+        except IndexError:
+            pass
+            #do nothing
 
 
 
 def cross_lines(r,N,drop):
-    collect = []
-    avoid = []
     for y, x in enumerate(result[:-1]):
-        task = []
-        task.append(x)
-        task.append(y)
-        task.append(result)
-        task.append(N)
-        collect.append(pool.apply_async(cross_line_worker, task))
+        task_list.append((x, y, result, N))
 
-    for res in collect:
-        s = res.get()
-        #avoid.append(s)
-        if s is not None:
-            drop = drop | res.get()
-    #avoid.append(result)
-    
-
-    #avoid = avoid + result
+    while(len(task_list) > 0):
+        for s in result_list:
+            if s is not None:
+                drop = drop | s
     return drop 
 """        
 def cross_line_worker(x,y,points, N):
@@ -111,15 +108,21 @@ def solve_queens(N):
     if(insert(0,N)):
         print_result()
 
-from prime_sieve import get_primes
+
+from multiprocessing import Process,Manager 
 if __name__ == "__main__":
     N = int(sys.argv[1])#int(raw_input(''))
     global space
     space = range (N)
-    global primes
-    primes = get_primes(N)
-   
+    manager = Manager()
+    global task_list
+    task_list = manager.list()
+    result_list = manager.list()
+    workers = []
+    for i in range(4):
+        p = Process(target = queen_worker, args = (task_list, result_list))
+        p.start()
     solve_queens(N)
-    #if(insert(0,N)):
-    #    print_result()
-        #print_verbose(b)
+    for p in workers:
+        p.join()
+

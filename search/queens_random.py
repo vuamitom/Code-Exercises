@@ -8,10 +8,17 @@ But now the hatred has increased and the new condition is that no three of them 
 """
 result = [] # this serves mainly as an index to avoid iteration
 cache = dict()
+from random import randint
 def insert(r,N,b):
     """ insert a queen into row r of board b """ 
     #start = 0 if r > 0 else 1
-    for c in range ( N):
+    #avail = space - result
+    avail = [x for x in space if x not in result]
+    #for c in range ( N):
+    while len(avail) > 0:
+        indx = randint(0, len(avail) - 1)
+        c = avail[indx]
+        del avail[indx]
         #insert queen in col c for row r 
         if(b[r][c] == 0):
             #b[r][c] = 1
@@ -200,10 +207,19 @@ def solve_queens(N):
     else:
         return None
 
+def run_worker(N):
+    global space
+    space = range(N)
+    res = solve_queens(N)
+    print_result(res)
+    return res
+
 import sys
 from prime_sieve import get_primes
 if __name__ == "__main__":
     N = int(sys.argv[1])#int(raw_input(''))
+    global space
+    space = range(N)
     b = solve_queens(N)
     if b is not None:
         print_result(b)
