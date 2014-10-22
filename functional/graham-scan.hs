@@ -35,7 +35,7 @@ solveG (x:y:z:ts) = solveM ts [x,y,z]
 
 solveM :: [(Int, Int)] -> [(Int, Int)] -> [(Int, Int)]
 solveM [] hull = hull 
-solveM remain@(a:as) hull@(x:y:ys) = if isLeft x y a then solveM as (a:hull) else solveM remain (y:ys)  
+solveM remain@(a:as) hull@(x:y:ys) = if isLeft x y a then solveM as (a:hull) else solveM remain (y:ys) -- TODO : check for case when ys has only 1 elemnt 
     where isLeft x y a = ccw x y a > 0 
 
 
@@ -54,6 +54,7 @@ main = do
         points = map (\[x, y] -> (x, y)). map (map (read::String->Int)). map words. lines $ content
         ans = solve points
     putStrLn $ show $ccw (1,1) (2,5) (2,2)
-    --putStrLn $ show $ solveG [(1,1),(2,2),(2,5),(3,3),(3,2),(5,3)]
+    -- MAKE BELOW CASE WORKS
+    putStrLn $ show $ solveG [(1,1),(2,2),(2,5),(3,3),(3,2),(5,3)]
     putStrLn $  show $ solveG $ sortG $ swap [(2,5), (1,1),(3,3),(5,3),(3,2),(2,2)]
     --printf "%.1f\n" ans
