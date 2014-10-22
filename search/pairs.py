@@ -12,6 +12,7 @@ def count_pairs(seq, K):
     return count
 
 
+
 if __name__ == "__main__":
     N, K = [ int(x) for x in raw_input('').split(' ') ]
     seq = [int (x) for x in raw_input('').split(' ')]
