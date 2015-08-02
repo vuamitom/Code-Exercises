@@ -7,7 +7,7 @@
 using namespace std;
 /* Head ends here */
 struct point{
-    int x, y, d;
+    int x, y, d; //distance 'd' is not necessary, remove soon
     
     friend bool operator < (const point &p1 , const point &p){
         return (p1.x != p.x)? (p1.x < p.x) : (p1.y < p.y);
@@ -116,15 +116,13 @@ void dfs( int x, int y, int pacman_x, int pacman_y, int food_x, int food_y, vect
     }
     cout << ( explored.size() + 1) << '\n';     
     cout << trace.str();    
-    cout << path.size() << '\n';
-    point* ps[path.size()];
-    int s = path.size(); 
-    for(int n = 0 ; !path.empty(); path.pop()){
-        ps[n] = &path.top();
-        n++;
+    cout << (path.size() - 1) << '\n';
+    stack<point> ps;
+    for(; !path.empty(); path.pop()){
+       ps.push(path.top());
     }
-    for (int i = s - 1   ; i >=0 ; i--){
-        cout << *ps[i];
+    for (;!ps.empty(); ps.pop()){
+        cout << ps.top();
     }
 }
 /* Tail starts here */
