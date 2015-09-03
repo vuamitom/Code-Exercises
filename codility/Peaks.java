@@ -73,7 +73,9 @@ expected worst-case space complexity is O(N), beyond input storage (not counting
 Elements of input arrays can be modified.
 */
 import java.util.*; 
-
+//========== CAN BE FASTER IF USE PREFIX SUM ======================
+//==============================================================
+//=========== 
 public class Peaks {
     public int solution(int[] A) {
         // write your code in Java SE 8

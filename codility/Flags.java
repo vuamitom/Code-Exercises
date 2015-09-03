@@ -67,5 +67,53 @@
  * 
  */
  // solution https://codility.com/media/train/solution-flags.pdf
+ // HINT ========================================
 
+ /*
+    OBSERVATIONS: 
+    1. k flags k distant away --> distant from 1st to last flag is (k -1 ) * k , which should be <= N 
+    2. Use PREFIX SUM, which make look up for next peak constant instead of log like binarySearch
+ */ 
+import java.util.*;
+public class Flags{
+    public int solution(int[] A){
+        // find the peak 
+        List<Integer> peaks = new ArrayList<Integer>(); 
+        for(int i = 1 ; i < A.length -1 ;i ++){
+            if (A[i] > A[i-1] && A[i] > A[i+1]){
+                peaks.add(i); 
+            }
+        }
+        if(peaks.size() <= 1){
+            return peaks.size(); 
+        }
+        
+        for(int n = peaks.size(); n > 0 ; n--){
+           int i = peaks.get(0); 
+           int c = 1; 
+           while (true){
+              int next = i + n; 
+              int pos = Collections.binarySearch(peaks, next);  
+              if (pos < 0){
+                 pos = - ( pos + 1); 
+                 if ( pos >= peaks.size()){
+                    break; 
+                 }
+              }
+              i = peaks.get(pos); 
+              c++; 
+           }
+           if ( c == n){
+                return c; 
+           }
 
+        }
+        return 0; 
+
+    }
+
+    public static void main(String[] args){
+        Flags f = new Flags(); 
+        System.out.println(f.solution(new int[] {1, 5, 3, 4, 3, 4, 1, 2, 3, 4, 6, 2}));
+    }
+}
