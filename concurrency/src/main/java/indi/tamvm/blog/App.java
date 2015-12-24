@@ -1,13 +1,17 @@
 package indi.tamvm.blog;
 
 /**
- * Hello world!
  *
  */
 public class App 
 {
     public static void main( String[] args )
     {
-        System.out.println( "Hello World!" );
+        Tree tree = new Tree(10); 
+        Thread m1 = new Thread(new Monkey(tree)); 
+        Thread m2 = new Thread(new Monkey(tree)); 
+        m1.start(); 
+        m2.start();
+        
     }
 }
