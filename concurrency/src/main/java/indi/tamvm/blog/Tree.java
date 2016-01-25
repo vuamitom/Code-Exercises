@@ -1,7 +1,7 @@
 package indi.tamvm.blog; 
 
 public class Tree{
-    private int bananas; 
+    private volatile int bananas; 
 
     public Tree(int b){
         this.bananas = b; 

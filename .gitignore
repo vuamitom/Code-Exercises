@@ -4,3 +4,4 @@
 *.hi
 *.hp
 *.class
+/npl/data/**
