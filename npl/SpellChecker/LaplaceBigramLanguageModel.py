@@ -1,8 +1,12 @@
+import math, collections
+
 class LaplaceBigramLanguageModel:
 
   def __init__(self, corpus):
     """Initialize your data structures in the constructor."""
     # TODO your code here
+    self.total = 0
+    self.bigram = collections.defaultdict(lambda: 0)
     self.train(corpus)
 
   def train(self, corpus):
@@ -10,11 +14,24 @@ class LaplaceBigramLanguageModel:
         Compute any counts or other corpus statistics in this function.
     """  
     # TODO your code here
-    pass
+    for sentence in corpus.corpus:
+      for idx, datum in enumerate(sentence.data[:(len(sentence.data)-1)]):  
+        token = datum.word + 
+        self.unigramCounts[token] = self.unigramCounts[token] + 1
+        self.total += 1
 
   def score(self, sentence):
     """ Takes a list of strings as argument and returns the log-probability of the 
         sentence using your language model. Use whatever data you computed in train() here.
     """
-    # TODO your code here
-    return 0.0
+    # TODO your code here 
+    score = 0.0 
+    for token in sentence:
+      count = self.unigramCounts[token]
+      if count > 0:
+        score += math.log(count + 1)
+        score -= math.log(self.total + len(self.unigramCounts) + 1)
+      else:
+        # score = float('-inf') # not smoothed
+        score -= math.log(self.total + len(self.unigramCounts) + 1)
+    return score
