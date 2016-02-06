@@ -5,3 +5,4 @@
 *.hp
 *.class
 /npl/data/**
+**/.vscode/**
