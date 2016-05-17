@@ -28,7 +28,7 @@ class SpellCorrect:
   def __init__(self, lm, corpus):
     """initializes the language model."""
     self.languageModel = lm
-    self.editModel = EditModel('../data/count_1edit.txt', corpus)
+    self.editModel = EditModel('../data/wk2/data/count_1edit.txt', corpus)
 
 
   def evaluate(self, corpus):  
@@ -100,10 +100,10 @@ class SpellCorrect:
 def main():
   """Trains all of the language models and tests them on the dev data. Change devPath if you
      wish to do things like test on the training data."""
-  trainPath = '../data/holbrook-tagged-train.dat'
+  trainPath = '../data/wk2/data/holbrook-tagged-train.dat'
   trainingCorpus = HolbrookCorpus(trainPath)
 
-  devPath = '../data/holbrook-tagged-dev.dat'
+  devPath = '../data/wk2/data/holbrook-tagged-dev.dat'
   devCorpus = HolbrookCorpus(devPath)
 
   print 'Uniform Language Model: '
