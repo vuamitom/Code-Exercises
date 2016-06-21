@@ -69,11 +69,14 @@ def parse_index_meta(data):
       };
     """
     bb = ByteBuffer(data)
-    magic, version, entryCount, size, reason =  bb.readUInt8(), bb.readUInt4(), bb.readUInt8(), bb.readUInt8(), bb.readUInt4()
+    magic, version, entryCount, size =  bb.readUInt8(), bb.readUInt4(), bb.readUInt8(), bb.readUInt8()
     # verify index meta
     print 'magic no: ' + str(magic)
     assert magic == 0x656e74657220796f
     print 'version: ' + str(version)
+    reason = None 
+    if version == 7: 
+        reason = bb.readUInt4()
     # assert version == 7, 'index version out of date'
     # return data
     return magic, version, entryCount, size, reason
@@ -81,12 +84,9 @@ def parse_index_meta(data):
 def parse_entries_meta(data, entry_count):
     entries = {}
     bb = ByteBuffer(data)
-    print hex(unpack('Q', data[0:8].tobytes())[0])
     for i in xrange(0, entry_count): 
         # read key
         key = bb.readUInt8()
-        if (key == 0xd1102e599a66d517): 
-            print 'ALLKDJFLSKDJF LDSFJ'
         last_time = bb.readInt8()
         size = bb.readUInt8()
         entries[key] = (last_time, size)
@@ -99,8 +99,11 @@ def parse_index_payload(data):
     EntryMetadata = key + hash + size
     """
     index_meta = parse_index_meta(data)
-    _, _, entry_count, _, _ = index_meta
-    entry_meta = parse_entries_meta(data[(8 + 4 + 8 + 8 + 4):], entry_count)
+    _, _, entry_count, version, _ = index_meta
+    offset = 8 + 4 + 8 + 8
+    if version == 7:
+        offset += 4
+    entry_meta = parse_entries_meta(data[(offset):], entry_count)
     return index_meta, entry_meta 
 
 def read_index():
@@ -117,6 +120,8 @@ def read_index():
     _, _, entryCount, size, reason = index_meta
     print 'Entry count: ' + str(entryCount) + ' Cache size: ' + str(size)
     total = 0
+    for k, m in entry_meta.items():
+        total += m[1]
 
     print 'TOTAL = ' + str(total)
 
