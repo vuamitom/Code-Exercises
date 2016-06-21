@@ -1,6 +1,8 @@
 import sys
+import hashlib
 import binascii
 from struct import *
+from common import ByteBuffer
 """
 String input = "http://www.amazon.com/";
         Assert.assertEquals("7ac408c1dff9c84b", CacheUtil.getEntryHashKey(input));
@@ -9,34 +11,6 @@ String input = "http://www.amazon.com/";
         input = "http://stc3.ia.zdn.vn/js/jquery.1.0.1.js";
         Assert.assertEquals("d1102e599a66d517", CacheUtil.getEntryHashKey(input));
 """
-class ByteBuffer(object):
-    
-    def __init__(self, data, init_offset = 0): 
-        self.data = data
-        self.offset = init_offset 
-
-    def readUInt4(self):
-        r = unpack_from('<I', self.data, self.offset)
-        self.offset += 4
-        return r[0]
-
-    def readUInt8(self):
-        r = unpack_from('<Q', self.data, self.offset)
-        self.offset += 8
-        return r[0]
-
-    def readInt8(self): 
-        r = unpack_from('<q', self.data, self.offset)
-        self.offset += 8
-        return r[0]
-        
-
-    def data(self):
-        return self.data
-
-    def offset(self):
-        return self.offset
-
 
 def verify_crc(crc, data):
     real_crc = binascii.crc32(data)
@@ -125,6 +99,15 @@ def read_index():
 
     print 'TOTAL = ' + str(total)
 
+def keyToHash(url):
+    m = hashlib.sha1()
+    m.update(url)
+    e = m.digest()
+    return reversed(e[:8])
+
+def toHexStr(s):
+    return ''.join([hex(ord(c)).replace('0x','') for c in s])
 
 if __name__ == '__main__': 
     read_index()
+    # print toHexStr(keyToHash('http://www.amazon.com/'))
