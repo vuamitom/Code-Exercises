@@ -1,5 +1,5 @@
 import sys
-from common import ByteBuffer
+from common import *
 """
  // A file containing stream 0 and stream 1 in the Simple cache consists of:
  //   - a SimpleFileHeader.
@@ -23,9 +23,12 @@ from common import ByteBuffer
  //   - the data.
  //   - at the end, a SimpleFileEOF record.
 """
-SIMPLE_EOF_SIZE = 8 + 4 + 4 + 4
+SIMPLE_EOF_SIZE = 8 + 4 + 4 + 4 + 4 # for some reason, there are last 5 bytes which I don't know what's for
 SIMPLE_HEADER = 8 + 4 * 3
 SIMPLE_FINAL_MAGICNO = 0xf4fa6f45970d41d8
+
+FLAG_HAS_CRC32 = 1 << 0
+FLAG_HAS_SHA256 = 1 << 1
 
 def read_simple_file_header(data):
     """
@@ -61,9 +64,18 @@ def read_simple_eof(data):
 def read_stream01(data):
     # header = read_simple_file_header(data)
     # read s0 eof 
-    s0_eof = read_simple_eof(data[- SIMPLE_EOF_SIZE:])
+    s0_eof = read_simple_eof(data[-SIMPLE_EOF_SIZE:])
     magic, flag, crc, ssize = s0_eof 
-    assert magic == SIMPLE_FINAL_MAGICNO
+    assert magic == SIMPLE_FINAL_MAGICNO, 'Magic no. not match SimpleFinalMagicNo' 
+    if flag & FLAG_HAS_CRC32:
+        # verify crc 
+        pass 
+    if flag & FLAG_HAS_SHA256:
+        pass 
+
+    print 'Stream0 size = ' + str(ssize)
+    stream0 = data[-(SIMPLE_EOF_SIZE + ssize): -SIMPLE_EOF_SIZE]
+    print stream0.tobytes()
     return None, None, None
 
      
@@ -73,5 +85,10 @@ if __name__ == '__main__':
     c = None
     with open(f, 'rb') as fi:
         c = fi.read()
-
-    header, s1, s0 = read_stream01(memoryview(c))
+    data = memoryview(c)
+    # print 'Total file size = ' + str(len(c))
+    # pickle_header, payload = parse_pickle(data)
+    # crc, size = pickle_header
+    # print 'Payload size = ' + str(size)
+    # verify_crc(crc, payload)
+    header, s1, s0 = read_stream01(data)

@@ -1,5 +1,6 @@
 # common
 from struct import *
+import binascii
 
 class ByteBuffer(object):
     
@@ -28,3 +29,18 @@ class ByteBuffer(object):
 
     def offset(self):
         return self.offset
+
+def verify_crc(crc, data):
+    real_crc = binascii.crc32(data)
+    assert real_crc == crc
+
+def parse_pickle(d, offset = 0): 
+    """
+    Pickle (PickleHeader + Payload)
+    PickleHeader = CRC (4bytes) + PayloadSize (4bytes)
+    """
+    bb = ByteBuffer(d, offset)
+    crc = bb.readUInt4()
+    payload_size = bb.readUInt4()
+    return ((payload_size, crc), d[offset + 8:])
+

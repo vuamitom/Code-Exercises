@@ -2,7 +2,7 @@ import sys
 import hashlib
 import binascii
 from struct import *
-from common import ByteBuffer
+from common import *
 """
 String input = "http://www.amazon.com/";
         Assert.assertEquals("7ac408c1dff9c84b", CacheUtil.getEntryHashKey(input));
@@ -12,19 +12,19 @@ String input = "http://www.amazon.com/";
         Assert.assertEquals("d1102e599a66d517", CacheUtil.getEntryHashKey(input));
 """
 
-def verify_crc(crc, data):
-    real_crc = binascii.crc32(data)
-    assert real_crc == crc
-
-def parse_pickle(d, offset = 0): 
-    """
-    Pickle (PickleHeader + Payload)
-    PickleHeader = CRC (4bytes) + PayloadSize (4bytes)
-    """
-    bb = ByteBuffer(d, offset)
-    crc = bb.readUInt4()
-    payload_size = bb.readUInt4()
-    return ((payload_size, crc), memoryview(d)[offset + 8:])
+# def verify_crc(crc, data):
+#     real_crc = binascii.crc32(data)
+#     assert real_crc == crc
+# 
+# def parse_pickle(d, offset = 0): 
+#     """
+#     Pickle (PickleHeader + Payload)
+#     PickleHeader = CRC (4bytes) + PayloadSize (4bytes)
+#     """
+#     bb = ByteBuffer(d, offset)
+#     crc = bb.readUInt4()
+#     payload_size = bb.readUInt4()
+#     return ((payload_size, crc), memoryview(d)[offset + 8:])
 
 def parse_index_meta(data):
     """
@@ -86,7 +86,7 @@ def read_index():
     with open(file_name, 'rb') as f: 
         r = f.read()
     print 'Total file size = ' + str(len(r)) 
-    header, payload = parse_pickle(r) 
+    header, payload = parse_pickle(memoryview(r))
     crc, size = header 
     verify_crc(crc, payload)
     print 'Payload size: ' + str(size)
@@ -95,6 +95,7 @@ def read_index():
     print 'Entry count: ' + str(entryCount) + ' Cache size: ' + str(size)
     total = 0
     for k, m in entry_meta.items():
+        print hex(k)
         total += m[1]
 
     print 'TOTAL = ' + str(total)
