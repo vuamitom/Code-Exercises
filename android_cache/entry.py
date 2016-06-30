@@ -1,6 +1,7 @@
 import sys
 from common import *
 from response_info import *
+import m509
 """
  // A file containing stream 0 and stream 1 in the Simple cache consists of:
  //   - a SimpleFileHeader.
@@ -100,66 +101,71 @@ def read_stream01(data):
 
 def parse_response_headers(data):
     # pass raw 
-    line_start = 0
-    line_end = None
+    current = 0
+    status = None
     for i, c in enumerate(data):
         if c =='\0':
-            line_end = i
+            status = data[0:i].tobytes()
+            current = i
             break
-    has_headers = line_end < len(data) - 2 and not data[line_end+1] == '\0'
-    # status = parse_status_line(data[line_start:line_end])
-    status = data[line_start:line_end]
-    headerstr = data[line_end:].tobytes()
-    headers = [ h for h in headerstr.split('\0') if not h.strip() == '' ]
-    temp_h = []
-    for h in headers:
-        if h.find(':') >= 0 or h.find('HTTP') >=0:
-            temp_h.append(h)
-        else: 
-            break
-    headers = temp_h
-    header_size = line_end + headerstr.find(headers[-1]) + len(headers[-1]) + 1
-    
-    return headers, header_size
+    print status
 
-def parse_status_line(data):
-    b = data.tobytes()
-    prefix, version = [t.trim() for t in b.split('/')]
-    assert prefix.lowercase() == 'http'
-    return version
+    return data[i:].tobytes().split('\0') 
 
-def read_cert(data):
-    h, pl = parse_pickle(data)
 
 def parse_response_info(data):
     phead, payload = parse_pickle(data)
     # verify crc 
     payload_size, crc = phead
+    # verify_crc(crc, payload)
     bb = ByteBuffer(payload)
     flags = bb.readUInt4()
     version = flags & RESPONSE_INFO_VERSION_MASK
     assert version < RESPONSE_INFO_MINIMUM_VERSION or version > RESPONSE_INFO_VERSION, 'Unexpected response info version'
-
+    data = payload
     req_time = bb.readUInt8()
     res_time = bb.readUInt8()
-
     # read header 
-    remain = data[(8 + 16):]
-    headers, header_size = parse_response_headers(remain)
-    remain = data[header_size:]
-    # print status 
+    # probably we have picked the wrong start of stream0
+    # byright, offset should've been 4 + 16
+    remain = data[( 16):]
+    bb = ByteBuffer(remain)
+    slen, header_data = bb.readString()
+    print ' str len = ' + str(slen)
+
+    headers = parse_response_headers(header_data)
+
+    # again, for some reason i don't know 
+    # offset += 4
+    remain = remain[(slen + 4):]
     print '\n'.join(headers)
     if flags & RESPONSE_INFO_HAS_CERT:
-        cert = read_cert(remain) 
+        cl, cert = m509.read_cert(remain) 
+        if cert is not None:
+            print cert.get_issuer()
+            print cert.get_subject()
+        remain = remain[cl:]
 
     if flags & RESPONSE_INFO_HAS_CERT_STATUS: 
-        cert_status = None
-
-    # ssl 
-
+        print 'cert_status: '
+        # cert_status = None
+        remain = remain[4:]
     # vary-data 
+    if flags & RESPONSE_INFO_HAS_VARY_DATA:
+        vary_data = remain[0:16]
+        remain = remain[16:]
 
+    print [hex(ord(c)) for c in remain[20:40]]
+    print remain.tobytes()
     # socket-address
+    bb = ByteBuffer(remain)
+    hl, host = bb.readString()
+    print str(hl)
+    print host
+    port = bb.readUInt2()
+
+    print 'host = ' + host + ':' + str(port)
+
 
     # protocol version 
 
