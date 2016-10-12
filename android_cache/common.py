@@ -22,7 +22,26 @@ class ByteBuffer(object):
         r = unpack_from('<q', self.data, self.offset)
         self.offset += 8
         return r[0]
+
+    def readUInt2(self): 
+        r = unpack_from('<H', self.data, self.offset)
+        self.offset += 2
+        return r[0]
+
+
+    def readData(self):
+        dlen = self.readUInt4()
         
+        r = dlen, self.data[self.offset:(self.offset + dlen)]
+        self.offset += dlen 
+        return r
+
+    def readString(self):
+        slen = self.readUInt4()
+        r = self.data[self.offset: (self.offset + slen)]
+        self.offset += slen
+        return slen +  (4- slen % 4) % 4, r
+        # return slen, r
 
     def data(self):
         return self.data
