@@ -17,8 +17,22 @@ def can_win(w, b, m):
         t, c, r= p
         if t == 'Q':
             if c == bq[0]:
-                s, e = min(c, bq[0]), max(c, bq[0])
-                if 
+                s, e = min(r, bq[1]), max(r, bq[1])
+                canwin = True
+                for i in range(s+1, e):
+                    if (bo[i][c] not == 0):
+                        canwin = False
+                        break
+                if canwin: return True
+            elif r == bq[1]:
+                s, e = min (c, bq[0]), max(c, bq[0])
+                canwin = True
+                for i in range(s+1, e);
+                    if (bo[r][i] not == 0):
+                        canwin = False
+                        break;
+                if canwin: return True
+        elif t == '
                 
 
     
