@@ -1,10 +1,11 @@
 -- split string
 split b = s b [""]
-    where 
+    where
         s "" r = r
         s x r
             | head x == ' ' = s (tail x) (r ++ [""])
-            | otherwise = s (tail x) ((ini r) ++ [((last r) ++ (head x))])
+            | otherwise = s (tail x) ((init r) ++ [((last r) ++ [(head x)])])
+            
 -- to binary 
 toB :: Int -> [Int]
 toB x = t x []
