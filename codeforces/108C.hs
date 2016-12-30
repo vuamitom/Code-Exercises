@@ -35,7 +35,8 @@ solve_r x = s3 ((length x) - 1) x
             | (x!!i) == [] = s3 (i -1) x
             | otherwise = s3 (i-1) (dig i x)
 
-co x = [i | i <- x, not (i == [])]
+--co x = [i | i <- x, not (i == [])]
+co x = [i | i <- x, (not (i == [])) && (not ((i!!0) ==(i!!1)))]
 pp (x:y:z:[]) = (show x) ++ " " ++ (show y) ++ " " ++ (show z)
 main = do
     l1 <- getLine
