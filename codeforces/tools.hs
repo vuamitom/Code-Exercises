@@ -1,3 +1,7 @@
+-- haskell useful idioms 
+-- unpack tuple:     let (m, n, h) = toI l1
+-- unpack array:     let [m, n, h] = toI l1
+
 -- split string
 split b = s b [""]
     where
