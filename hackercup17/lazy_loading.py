@@ -1,6 +1,5 @@
 import math
 
-
 def solve():
     t = int(raw_input())
     for d in range(0, t):
