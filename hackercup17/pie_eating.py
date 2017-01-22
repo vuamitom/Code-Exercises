@@ -14,7 +14,17 @@ def solve_sub(M, m):
                 if o < r:
                     d[o] = p[o]
                 else: 
-                    d[o] = min([p[o-1] + min(c) + 1, p[o]]) if o < len(p) else p[len(p) - 1] + sum(c[0:(o - len(p) + 1)]) + (o - len(p) + 1) ** 2
+                    #d[o] = min([p[o-1] + min(c) + 1, p[o]]) if o < len(p) else p[len(p) - 1] + sum(c[0:(o - len(p) + 1)]) + (o - len(p) + 1) ** 2
+                    if o >= len(p):
+                        d[o] = p[len(p) -1] + sum(c[0:(o - len(p) + 1)]) + (o - len(p) + 1) ** 2
+                    else:
+                        mn = min ([r -1, o - m])
+                        sm = p[0]
+                        for j in range (mn, o):
+                            t = p[j] + sum(c[0:(o -j)]) + (o - j )**2
+                            sm = t if sm > t else sm
+                        d[o] = sm
+                            
         temp.append(d)
     print temp
     l = temp[len(temp) - 1][len(M) - 1]
