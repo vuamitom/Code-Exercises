@@ -1,5 +1,8 @@
 def solve(n):
     s = [int(c) for c in list(str(n))]
+    if len(s) == 1:
+        return str(n)
+        
     i = len(s) - 1
     while i >= 1:
         j = i - 1
@@ -36,6 +39,9 @@ def test():
     assert solve('912') == '899'
     assert solve('909') == '899'
     assert solve('172') == '169'
+    assert solve('132000098') == '129999999'
+    assert solve('0') == '0'
+    assert solve('987656789') == '899999999'
 
 # test()
 t = int(raw_input())  # read a line with a single integer
