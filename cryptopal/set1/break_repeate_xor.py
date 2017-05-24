@@ -1,4 +1,6 @@
 import base64
+import byteXor
+
 def hamming_distance(a, b):	
 	x = [ord(c) for c in a]
 	y = [ord(c) for c in b]
@@ -25,6 +27,23 @@ def guess_key_length(ip):
 	print 'min hamming_distance = ' + str(m)
 	return keysize
 
+def solve(inp):
+	keysize = guess_key_length(inp)
+	bl = [[]] * keysize
+	key = []
+	for i, c in enumerate(inp):
+		bl[i % keysize].append(c)
+	for b in bl:
+		v, s, k = byteXor.guess(b)
+		key.append(k)
+	return key
+
+def decryptXOR(inp, key):
+	o = []
+	for i, c in enumerate(inp):
+		o.append(ord(c) ^ key[i % len(key)])
+	return ''.join(chr(c) for c in o)
+
 
 # print hamming_distance('t', 'w')
 assert hamming_distance('this is a test', 'wokka wokka!!!') == 37
@@ -33,4 +52,5 @@ with open('6.txt', 'r') as f:
 	inp = f.read()
 
 inp = base64.b64decode(inp)
-print guess_key_length(inp)
+key = solve(inp)
+print decryptXOR(inp, key)
