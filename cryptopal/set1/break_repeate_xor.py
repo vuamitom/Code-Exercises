@@ -18,16 +18,20 @@ def guess_key_length(ip):
 	keysize = 0
 	al = []
 	for s in range(2, 41):
-		w1 = ip[0:s]
-		w2 = ip[s:2*s]
-		d = hamming_distance(w1, w2)/ (s * 1.0)
+		d = 0
+		for t in range (0, 6):			
+			w1 = ip[(t*2*s):((t*2+1)*s)]
+			w2 = ip[((t*2+1)*s): ((t*2 + 2) * s)]
+			d += hamming_distance(w1, w2)/ (s * 1.0)
+		d /= 6
 		al.append((s, d))
 		if d < m:
 			m = d
 			keysize = s
 	al =  sorted(al, key= lambda x: x[1])
 	print 'min hamming_distance = ' + str(m)
-	return al[15:20]
+	print str(al)
+	return al[0:1]
 
 def solve(inp):
 	keysizes = guess_key_length(inp)
