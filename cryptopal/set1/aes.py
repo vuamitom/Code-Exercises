@@ -7,4 +7,4 @@ with open('7.txt', 'r') as f:
 	content = f.read()
 
 
-print obj.decrypt(base64.b64decode(content))
+print obj.decrypt(base64.b64decode(content)[0:16])
