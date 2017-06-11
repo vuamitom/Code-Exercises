@@ -3,7 +3,7 @@ from Crypto.Cipher import AES
 import pkcs7_padding
 
 
-def ecb(inp, k, ori):
+def ecb(inp, k):
 	obj = AES.new(k, AES.MODE_ECB, gen_aes_key())
 	# print 'original = ' + repr(obj.encrypt(ori))
 	return obj.encrypt(pkcs7_padding.pad(inp, 16))
@@ -26,16 +26,16 @@ def encrypt(inp):
 	# pl = inp
 	t = random.randint(0, 1) 
 	if t == 0:
-		print 'ecb -'
-		return (ecb(pl, k, inp), 0)
+		# print 'ecb -'
+		return (ecb(pl, k), 0)
 	else:
-		print 'cbc -'
+		# print 'cbc -'
 		return (cbc(pl, k), 1)
 
 
 def detect(en, d = False):
-	if d:
-		print repr(en)
+	# if d:
+	# 	print repr(en)
 	for i, _ in enumerate(en):
 		if i + 16 < len(en):
 			if en[i] == en[i + 16]:
