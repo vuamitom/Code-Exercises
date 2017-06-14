@@ -7,4 +7,4 @@ def pad(inp, bl):
 	# print (chr(c) * c)
 	return inp + (chr(c) * c)
 
-print repr(pad('YELLOW SUBMARINE', 20))
+# print repr(pad('YELLOW SUBMARINE', 20))
