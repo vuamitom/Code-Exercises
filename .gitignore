@@ -6,5 +6,6 @@
 *.hi
 *.hp
 *.class
+*.exe
 /npl/data/**
 **/.vscode/**
