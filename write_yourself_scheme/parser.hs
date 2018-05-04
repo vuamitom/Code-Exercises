@@ -42,7 +42,7 @@ parseNumberDo = do
                 return (Number . read) rdigit 
 
 parseNumberSeq :: Parser LispVal
-parseNumberSeq = (many1 digit) >>= (\ rdigit -> return (Number . read) rdigit)
+parseNumberSeq = (many1 digit) >>= (\rd -> (Number . read) rd) 
 
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
