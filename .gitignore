@@ -7,5 +7,7 @@
 *.hp
 *.class
 *.exe
+*.tar.gz
+/deeplearning/notMNIST_*/**
 /npl/data/**
 **/.vscode/**
