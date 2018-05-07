@@ -8,6 +8,7 @@
 *.class
 *.exe
 *.tar.gz
+*.pickle
 /deeplearning/notMNIST_*/**
 /npl/data/**
 **/.vscode/**
