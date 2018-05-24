@@ -2,6 +2,8 @@ import os
 import hashlib
 from six.moves import cPickle as pickle
 import numpy as np
+import matplotlib.pyplot as plt
+import imageio
 
 root_dir = '.'
 image_size = 28
@@ -64,7 +66,19 @@ def run_validate_data():
         train_data = dataset['train_dataset']
         test_data = dataset['test_dataset']
         val_data = dataset['valid_dataset']
+        test_labels = dataset['test_labels']
     check_dup_cosine_sim(train_data, test_data)
+    # check_dup_md5(train_data, test_data, -1)
+
+def get_mag(X):
+    mX = np.sqrt(np.sum(X ** 2, axis = 1))
+    mX = mX.reshape(mX.shape[0], 1)
+    return mX
+
+def get_prod(X, Y):
+    mX = get_mag(X)
+    mY = get_mag(Y)
+    return np.inner(mX, mY)
 
 
 # %%time
@@ -76,17 +90,12 @@ def check_dup_cosine_sim(source_dataset, target_dataset):
 
     # calculate cos_sim matrix 
     # X.Y = |X||Y| cos O
-    print('cal magnitude X')
-    mX = np.sqrt(np.sum(X ** 2, axis = 1))
-    mX = mX.reshape(mX.shape[0], 1)
-    print('cal magnitude X')
-    mY = np.sqrt(np.sum(Y ** 2, axis=1))
-    mY = mY.reshape(mY.shape[0], 1)
     print('cal sim matrix')
     cos_sim = np.inner(X, Y) 
     print ('cal mag')
-    mag = np.inner(mX, mY)
-    print ('cal cos sim')
+    mag = get_prod(X, Y)
+    print('dividee shape ', cos_sim.shape, ' divider Shape ', mag.shape)
+    print ('cal cos sim ')
     cos_sim = cos_sim / mag    
     # absolute similarity has a cosine similarity of 1
     print('DONE cal sim matrix')
@@ -95,9 +104,126 @@ def check_dup_cosine_sim(source_dataset, target_dataset):
     simi = sum([1 for ri in range(0, r) for ci in range(0, c) if cos_sim[ri][ci] == 1])
     print ('similarity ', simi)
 
-def sanitize_data():
-    pass
+def denorm_img(imgdata):
+    return imgdata.astype(float) * 255 + 255/2
 
-run_validate_data()
+def md5(img):
+    m = hashlib.md5()
+    for r in range(0, image_size):
+        for c in range(0, image_size):
+            m.update(img[r][c])
+    return m.digest()
+
+def check_dup_md5(source_dataset, target_dataset, max_dup_count = 15):
+    # md5 source
+    check = set()
+    inverse = {}
+    remove_from_source = []
+    remove_from_target = []
+    for img_idx in range(0, target_dataset.shape[0]):
+        h = md5(target_dataset[img_idx])
+        check.add(h)
+        inverse[h] = img_idx
+    dc = 0
+    fig = None
+    plt_r = 1
+    for img_idx in range(0, source_dataset.shape[0]):
+        h = md5(source_dataset[img_idx])
+        if h in check:
+            target_idx = inverse[h]
+            remove_from_source.append(img_idx)
+            remove_from_target.append(target_idx)
+    return remove_from_source, remove_from_target
+
+# def hardcode_verify(h, ar):
+#     print ('hardcode verify', ar)
+#     data_file = 'J'   
+#     train_data, val_data, test_data = None, None, None
+#     dir = os.path.join(root_dir, 'notMNIST_small', data_file)
+#     names = os.listdir(dir)
+#     for f in names:
+#         if os.path.isfile(os.path.join(dir, f)):
+#             image_data = (imageio.imread(os.path.join(dir, f)).astype(float) - 
+#                     255.0  / 2) / 255.0
+#             # nh = md5(image_data)
+#             # if h == nh:
+#             #     print ('FOUND ', f)
+#             # print (image_data.shape, ar.shape)
+#             if np.array_equal(image_data, ar):
+#                 print ('FOUND', f)
+
+def filter_duplicate(train_data, train_label, test_data, test_label):
+    rm_src, rm_target = check_dup_md5(train_data, test_data)
+    print ('delete because of duplicate', rm_src, ' ', rm_target)
+    if len(rm_src) > 0:
+        train_data = np.delete(train_data, rm_src)
+        train_label = np.delete(train_label, rm_src)
+        test_data = np.delete(test_data, rm_target)
+        test_label = np.delete(test_label, rm_target)
+
+    return train_data, train_label, test_data, test_label
+
+def filter_purely_black_or_white(data, label):
+    toremove = []
+    for s in range(0, label.shape[0]):
+        d = data[s]
+        if is_single_color(d, 0.5) or is_single_color(d, -0.5):
+            # delete
+            toremove.append(s)
+    if len(toremove) > 0:
+        print ('remove pure black or white', toremove)
+        data = np.delete(data, toremove)
+        label = np.delete(label, toremove)
+        
+    return data, label
+
+def is_single_color(data, color_code):
+    singluar = True
+    for r in range(0, data.shape[0]):
+        for c in range(0, data.shape[1]):
+            if not (data[r][c] <= color_code + 0.000001 and data[r][c] >= color_code - 0.000001):
+                singluar = False
+                break
+        if not singluar:
+            break
+    return singluar          
+
+def sanitize_data():
+    # remove img that is just purely black and white
+    # and remove dup occur in test and validation set from training
+    data_file = 'notMNIST.pickle'   
+    train_data, val_data, test_data = None, None, None
+    with open(os.path.join(root_dir, data_file), 'rb') as f:
+        dataset = pickle.load(f)
+        train_data = dataset['train_dataset']
+        test_data = dataset['test_dataset']
+        val_data = dataset['valid_dataset']
+        test_labels = dataset['test_labels']
+        train_labels = dataset['train_labels']
+        valid_labels = dataset['valid_labels']
+    print ('filter out purely back white')
+    train_data, train_labels = filter_purely_black_or_white(train_data, train_labels)
+    test_data, test_labels = filter_purely_black_or_white(test_data, test_labels)
+    valid_data, valid_labels = filter_purely_black_or_white(val_data, valid_labels)  
+
+    print ('filter out duplicate in training')
+    train_data, train_labels, test_data, test_labels = filter_duplicate(train_data, train_labels, test_data, test_labels)
+    train_data, train_labels, val_data, valid_labels = filter_duplicate(train_data, train_labels, val_data, valid_labels)
+
+    output_file = 'sanitized_notMNIST.pickle'   
+
+    save = {
+      'train_dataset': train_data,
+      'train_labels': train_labels,
+      'valid_dataset': val_data,
+      'valid_labels': valid_labels,
+      'test_dataset': test_data,
+      'test_labels': test_labels,
+    }
+    with open(os.path.join(root_dir, output_file), 'wb') as f:
+        pickle.dump(save, f, pickle.HIGHEST_PROTOCOL)
+
+sanitize_data()
+# run_validate_data()
 # quick_check_overlap()
 # check_overlap_data()
