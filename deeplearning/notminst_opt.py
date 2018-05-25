@@ -124,9 +124,6 @@ def check_dup_md5(source_dataset, target_dataset, max_dup_count = 15):
         h = md5(target_dataset[img_idx])
         check.add(h)
         inverse[h] = img_idx
-    dc = 0
-    fig = None
-    plt_r = 1
     for img_idx in range(0, source_dataset.shape[0]):
         h = md5(source_dataset[img_idx])
         if h in check:
@@ -154,14 +151,14 @@ def check_dup_md5(source_dataset, target_dataset, max_dup_count = 15):
 
 def filter_duplicate(train_data, train_label, test_data, test_label):
     rm_src, rm_target = check_dup_md5(train_data, test_data)
-    print ('delete because of duplicate', rm_src, ' ', rm_target)
+    print ('delete from training because of duplicate', len(rm_src))
     if len(rm_src) > 0:
-        train_data = np.delete(train_data, rm_src)
-        train_label = np.delete(train_label, rm_src)
-        test_data = np.delete(test_data, rm_target)
-        test_label = np.delete(test_label, rm_target)
+        train_data = np.delete(train_data, rm_src, 0)
+        train_label = np.delete(train_label, rm_src, 0)
+        # test_data = np.delete(test_data, rm_target, 0)
+        # test_label = np.delete(test_label, rm_target, 0)
 
-    return train_data, train_label, test_data, test_label
+    return train_data, train_label
 
 def filter_purely_black_or_white(data, label):
     toremove = []
@@ -171,9 +168,9 @@ def filter_purely_black_or_white(data, label):
             # delete
             toremove.append(s)
     if len(toremove) > 0:
-        print ('remove pure black or white', toremove)
-        data = np.delete(data, toremove)
-        label = np.delete(label, toremove)
+        print ('remove pure black or white', len(toremove))
+        data = np.delete(data, toremove, 0)
+        label = np.delete(label, toremove, 0)
         
     return data, label
 
@@ -201,15 +198,22 @@ def sanitize_data():
         test_labels = dataset['test_labels']
         train_labels = dataset['train_labels']
         valid_labels = dataset['valid_labels']
-    print ('filter out purely back white')
+    print ('filter out purely back white training, label: ', train_data.shape, train_labels.shape)
     train_data, train_labels = filter_purely_black_or_white(train_data, train_labels)
+    print ('--- after filter out purely back white training, label: ', train_data.shape, train_labels.shape)
+    print ('filter out purely back white test, label: ', test_data.shape, test_labels.shape)
     test_data, test_labels = filter_purely_black_or_white(test_data, test_labels)
-    valid_data, valid_labels = filter_purely_black_or_white(val_data, valid_labels)  
+    print ('--- after filter out purely back white test, label: ', test_data.shape, test_labels.shape)
+    print ('filter out purely back white valid, label: ', val_data.shape, valid_labels.shape)
+    val_data, valid_labels = filter_purely_black_or_white(val_data, valid_labels)  
+    print ('--- after filter out purely back white valid, label: ', val_data.shape, valid_labels.shape)
 
-    print ('filter out duplicate in training')
-    train_data, train_labels, test_data, test_labels = filter_duplicate(train_data, train_labels, test_data, test_labels)
-    train_data, train_labels, val_data, valid_labels = filter_duplicate(train_data, train_labels, val_data, valid_labels)
-
+    print ('filter out duplicate in training and test')
+    train_data, train_labels = filter_duplicate(train_data, train_labels, test_data, test_labels)
+    print ('--- train data after filter ', train_data.shape, train_labels.shape)
+    print ('filter out duplicate in training and validation')
+    train_data, train_labels = filter_duplicate(train_data, train_labels, val_data, valid_labels)
+    print ('--- train data after filter ', train_data.shape, train_labels.shape)
     output_file = 'sanitized_notMNIST.pickle'   
 
     save = {
