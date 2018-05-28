@@ -7,7 +7,7 @@ from six.moves import cPickle as pickle
 
 def load_dataset():
     root_dir = '.'
-    df = os.path.join(root_dir, 'notMNIST.pickle')   
+    df = os.path.join(root_dir, 'sanitized_notMNIST.pickle')   
     with open(df, 'rb') as f:
         dataset = pickle.load(f)
         return dataset
@@ -21,13 +21,13 @@ def train_model(train_data, train_labels, train_size = 50):
     td = td.reshape(td.shape[0], -1)
     
     print ('train input shape ', td.shape)
-    logreg = linear_model.LogisticRegression(C=1e5, n_jobs = 8)
+    logreg = linear_model.LogisticRegression(C=1e5)
     # we create an instance of Neighbours Classifier and fit the data.
     logreg.fit(td, tl)
     return logreg
     
 def train_and_predict():
-    train_size, test_size = -1, -1
+    train_size, test_size = 1000, 10
     train_data, val_data, test_data = None, None, None
     dataset = load_dataset()
     train_data = dataset['train_dataset']
