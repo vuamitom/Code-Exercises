@@ -12,3 +12,4 @@
 /deeplearning/notMNIST_*/**
 /npl/data/**
 **/.vscode/**
+**/node_modules/**

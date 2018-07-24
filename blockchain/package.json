@@ -1,0 +1,11 @@
+{
+  "name": "blockchain",
+  "version": "1.0.0",
+  "description": "test blockchain",
+  "main": "kyber.js",
+  "author": "tamvm",
+  "license": "MIT",
+  "dependencies": {
+    "web3": "^1.0.0-beta.34"
+  }
+}
