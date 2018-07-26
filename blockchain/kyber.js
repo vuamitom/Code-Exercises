@@ -4,7 +4,7 @@ const fs = require('fs');
 const BN = require('bn.js')
 const pad = require('pad')
 const kyberNetworkABI = JSON.parse(fs.readFileSync('./build/contracts/KyberNetwork.json', {flag: 'r', encoding: 'utf-8'}))['abi'];
-const kyberProxyABI = JSON.parse(fs.readFileSync('./build/contracts/KyberNetworkProxy.json', {flag: 'r', encoding: 'utf-8'}))['abi'];
+const wrapperABI = JSON.parse(fs.readFileSync('./build/contracts/Wrapper.json', {flag: 'r', encoding: 'utf-8'}))['abi'];
 // console.log(contractABI)
 // https://developer.kyber.network/docs/NetworksAppendix#kybernetwork
 // https://developer.kyber.network/docs/TokensAppendix#ether-eth
@@ -97,7 +97,7 @@ _web3.eth.getBlock(48  , function(error, result){
         console.error(error);
 
     let start = new Date().getTime();
-    const contract = new _web3.eth.Contract(kyberProxyABI, kyberNetwrokAddress, {
+    const contract = new _web3.eth.Contract(wrapperABI, wrapperAddress, {
       from: '0x13f126aDc69609FfA4B8acBa58b74cB48a034923'
     });
     // const contractInstance = contract.at();
@@ -130,34 +130,46 @@ _web3.eth.getBlock(48  , function(error, result){
     //   dest =dest.concat(dest.slice());
     //   qty =qty.concat(qty.slice());
     // }
-    console.log('Prepare data ' + src.length + ' pairs ' + (new Date().getTime() - start) + ' ms');
-    start = new Date().getTime();
-    var t = 0;
-    let fn = (srcA, destA, qtyA) => {
-      contract.methods.getExpectedRate(srcA, destA, (_web3.utils.toWei('' +qtyA, 'ether'))).call({}, function(err, result) {
-        if (err)
-        console.error(err); 
-        printResult2(result, srcA, destA, qtyA);
 
-        // console.log('Request return ' + (new Date().getTime() - start) + ' ms')
-        start = new Date().getTime();
-        t++;
-        if (t < src.length) {
-          fn(src[t], dest[t], qty[t]);
-        }
-        // printResult(result, qty, src, dest);
-        // contract.methods.getExpectedRates('0x91a502C678605fbCe581eae053319747482276b9', src, dest, qty).call({}, (err, result) => {
-        //   console.log('===================================================');
-        //   printResult(result, qty, src, dest);
+    if (false) {
+      console.log('Prepare data ' + src.length + ' pairs ' + (new Date().getTime() - start) + ' ms');
+      start = new Date().getTime();
+      var t = 0;
+      let fn = (srcA, destA, qtyA) => {
+        contract.methods.getExpectedRate(srcA, destA, (_web3.utils.toWei('' +qtyA, 'ether'))).call({}, function(err, result) {
+          if (err)
+          console.error(err);
+          console.log(result); 
+          printResult2(result, srcA, destA, qtyA);
 
-        //   contract.methods.getExpectedRates('0x91a502C678605fbCe581eae053319747482276b9', src, dest, qty).call({}, (err, result) => {
-        //     console.log('===================================================');
-        //     printResult(result, qty, src, dest);
-        //   })
-        // })
-        
+          // console.log('Request return ' + (new Date().getTime() - start) + ' ms')
+          start = new Date().getTime();
+          t++;
+          if (t < src.length) {
+            fn(src[t], dest[t], qty[t]);
+          }
+          // printResult(result, qty, src, dest);
+          // contract.methods.getExpectedRates('0x91a502C678605fbCe581eae053319747482276b9', src, dest, qty).call({}, (err, result) => {
+          //   console.log('===================================================');
+          //   printResult(result, qty, src, dest);
+
+          //   contract.methods.getExpectedRates('0x91a502C678605fbCe581eae053319747482276b9', src, dest, qty).call({}, (err, result) => {
+          //     console.log('===================================================');
+          //     printResult(result, qty, src, dest);
+          //   })
+          // })
+          
+        })
+      }
+      fn (src[t], dest[t], qty[t]);
+    }
+    else {
+      contract.methods.getExpectedRates(kyberNetwrokAddress, src, dest, 
+        qty.map(q => _web3.utils.toWei('' + q, 'ether'))).call({}, function(err, result) {
+        // console.log(result);
+        if (err) console.error(err);
+        printResult(result, qty, src, dest);
       })
     }
-    fn (src[t], dest[t], qty[t]);
 })
 
