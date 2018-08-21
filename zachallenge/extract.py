@@ -7,7 +7,7 @@ import datetime
 
 BASE = '/media/tamvm/DATA/AiChallenge'
 TRAIN_INPUT = os.path.join(BASE, 'train')
-TRAIN_TEMP = os.path.join(BASE, 'temp')
+TRAIN_TEMP = os.path.join(BASE, 'raw_features')
 
 MIN_VOICE_FREQ = 70
 MAX_VOICE_FREQ = 280
@@ -18,26 +18,24 @@ FEATURE_SIZE = N_MFCC * 2 + N_MELS
 SAMPLE_PER_FRAME = 256
 
 def get_mean():
-    file_list = os.listdir(TRAIN_INPUT)
-    prev_mean = None
-    for l in file_list:
+    # voice_list = []
+    all_data = None
+
+    for l in os.listdir(TRAIN_INPUT):
         p = os.path.join(TRAIN_INPUT, l) 
         print ('process ', l)
         for r in os.listdir(p):
             fp = os.path.join(p, r)
-            # start = datetime.datetime.now()
-            features = extract_voice_feature(fp)
-            print ('feature size = ', features.shape)
-            # print ('extract takes ', (datetime.datetime.now() - start).total_seconds())
-            features = fix_size(features)
-            row, col = features.shape        
-            assert row == FEATURE_SIZE
-            assert col == NO_FRAME
-            # print ('output feature = ', features.shape)
-            local_mean = np.mean(features)
-            break
-            # print (features)
-        break
+            # voice_list.append(fp)
+            dataset = None
+            with open(fp, 'rb') as f:
+                dataset = pickle.load(f)
+
+            all_data = dataset if all_data is None else all_data.concatenate(dataset, axis=1)
+    print ('All data count = ', all_data.shape)
+    means = np.mean(all_data, axis=1)
+    assert len(means) == FEATURE_SIZE
+    print ('Mean per coefs = ', means)
 
 def extract():
     try:        
