@@ -4,6 +4,7 @@ import librosa.display
 import numpy as np
 import matplotlib.pyplot as plt
 import datetime
+import pickle
 
 BASE = '/media/tamvm/DATA/AiChallenge'
 TRAIN_INPUT = os.path.join(BASE, 'train')
@@ -11,7 +12,7 @@ TRAIN_TEMP = os.path.join(BASE, 'raw_features')
 
 MIN_VOICE_FREQ = 70
 MAX_VOICE_FREQ = 280
-NO_FRAME = 10
+NO_FRAME = 259
 N_MFCC = 13
 N_MELS = 26
 FEATURE_SIZE = N_MFCC * 2 + N_MELS
@@ -57,13 +58,14 @@ def extract():
         voice_list = os.listdir(p)
         # dataset = np.ndarray(shape=(FEATURE_SIZE, NO_FRAME),
         #                  dtype=np.float64)        
-        for idx, r in enumerate(voice_list):
+        for idx, r in enumerate(voice_list):            
             fp = os.path.join(p, r)
+            print ('process: ', fp)
             # start = datetime.datetime.now()
             features = extract_voice_feature(fp)
             # print ('extract takes ', (datetime.datetime.now() - start).total_seconds())
             features = fix_size(features)
-            # print (features)
+            print (features.shape)
             row, col = features.shape        
             assert row == FEATURE_SIZE
             assert col == NO_FRAME
@@ -71,15 +73,19 @@ def extract():
             temp_filename = os.path.join(TRAIN_TEMP, l, str(idx) + '.pickle')            
             try:
                 with open(temp_filename, 'wb') as f:
-                  pickle.dump(features, f, pickle.HIGHEST_PROTOCOL)
-                print ('done extract for file ', r)
-              except Exception as e:
+                    pickle.dump(features, f, pickle.HIGHEST_PROTOCOL)
+                    print ('done extract for file ', r)
+            except Exception as e:
                 print('Unable to save data to', temp_filename, ':', e)                
 
 def fix_size(features):
-    r, c = features.shape
+    _, c = features.shape
     if c < NO_FRAME:
-        return np.concatenate((features, features[:, :(NO_FRAME-c)]), axis=1)
+        while c < NO_FRAME:
+            add = NO_FRAME - c
+            add = add if add < c else c
+            features = np.concatenate((features, features[:, :add]), axis=1)
+            _, c = features.shape
     elif c > NO_FRAME:
         return features[:, :NO_FRAME]
     return features
@@ -119,4 +125,8 @@ def extract_voice_feature(fp):
 
 
 if __name__ == '__main__':
-    get_mean()
+    extract()
+    # features = extract_voice_feature('/media/tamvm/DATA/AiChallenge/train/female_central/6056354cd5b14a8d99183ab9e5fc638d_01771.mp3')
+    # print ('extract takes ', (datetime.datetime.now() - start).total_seconds())
+    # features = fix_size(features)
+    # print ('---', features.shape)
