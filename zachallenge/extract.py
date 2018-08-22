@@ -9,7 +9,7 @@ import pickle
 BASE = '/media/tamvm/DATA/AiChallenge'
 TRAIN_INPUT = os.path.join(BASE, 'train')
 TRAIN_TEMP = os.path.join(BASE, 'raw_features')
-
+TRAIN_FEATURES = os.path.join(BASE, 'features')
 MIN_VOICE_FREQ = 70
 MAX_VOICE_FREQ = 280
 NO_FRAME = 259
@@ -22,21 +22,30 @@ def get_mean():
     # voice_list = []
     all_data = None
 
-    for l in os.listdir(TRAIN_INPUT):
-        p = os.path.join(TRAIN_INPUT, l) 
+    for l in os.listdir(TRAIN_TEMP):
+        p = os.path.join(TRAIN_TEMP, l) 
         print ('process ', l)
         for r in os.listdir(p):
+
             fp = os.path.join(p, r)
             # voice_list.append(fp)
+            print (' --- process ', fp)
             dataset = None
             with open(fp, 'rb') as f:
                 dataset = pickle.load(f)
 
-            all_data = dataset if all_data is None else all_data.concatenate(dataset, axis=1)
+            all_data = dataset if all_data is None else np.concatenate((all_data, dataset), axis=1)
     print ('All data count = ', all_data.shape)
     means = np.mean(all_data, axis=1)
-    assert len(means) == FEATURE_SIZE
     print ('Mean per coefs = ', means)
+    stds = np.std(all_data, axis=1)
+    print ('std per coefs = ', stds)
+    assert len(means) == FEATURE_SIZE
+    assert len(stds) == FEATURE_SIZE
+    stat = np.vstack((means, stds))
+    stat_file = os.path.join(BASE, 'feature_mean_std.pickle')
+    with open(stat_file, 'wb') as f:
+        pickle.dump(stat, f, pickle.HIGHEST_PROTOCOL)
 
 def extract():
     try:        
@@ -123,9 +132,50 @@ def extract_voice_feature(fp):
     # plt.show()
     return np.vstack((spectrogram, mfccs, delta))
 
+def standardize_and_save():
+    try:        
+        # make output dir
+        os.mkdir(TRAIN_FEATURES, mode=0o755)
+    except FileExistsError:
+        pass
+
+    if len(os.listdir(TRAIN_FEATURES)) > 0:
+        print ('Already extracted')
+        return None
+
+    mean_std = None
+    with open(os.path.join(BASE, 'feature_mean_std.pickle'), 'rb') as f:
+        mean_std = pickle.load(f)
+    means = mean_std.take(0, axis=0)
+    stds = mean_std.take(1, axis=0)
+    # print (means)
+    for l in os.listdir(TRAIN_TEMP):
+        print ('load data for ', l)
+
+        p = os.path.join(TRAIN_TEMP, l)
+        voice_list = os.listdir(p)
+        data_per_type = np.ndarray(shape=(len(voice_list), FEATURE_SIZE, NO_FRAME),
+                         dtype=np.float64)
+        for voice_number, v in enumerate(voice_list):
+            vp = os.path.join(p, v)
+            dataset = None
+            with open(vp, 'rb') as f:
+                dataset = pickle.load(f)
+            # standardize features
+            dataset = ((dataset.T - means) / stds).T
+            r, c = dataset.shape
+            assert r == FEATURE_SIZE
+            assert c == NO_FRAME
+            data_per_type[voice_number, :, :] = dataset
+        feature_file = os.path.join(TRAIN_FEATURES, l + '.pickle')
+        print ('done standardize data for ', l, ' shape = ', data_per_type.shape)
+
+        with open(feature_file, 'wb') as f:
+            pickle.dump(data_per_type, f, pickle.HIGHEST_PROTOCOL)
+            print ('dump data to file ', feature_file)
 
 if __name__ == '__main__':
-    extract()
+    standardize_and_save()
     # features = extract_voice_feature('/media/tamvm/DATA/AiChallenge/train/female_central/6056354cd5b14a8d99183ab9e5fc638d_01771.mp3')
     # print ('extract takes ', (datetime.datetime.now() - start).total_seconds())
     # features = fix_size(features)
