@@ -18,6 +18,17 @@ N_MELS = 26
 FEATURE_SIZE = N_MFCC * 2 + N_MELS
 SAMPLE_PER_FRAME = 256
 
+# Gender: Female: 0, Male: 1
+# Accent: North: 0, Central: 1, South: 2
+GENDER_M = 1
+GENDER_F = 0
+ACCENT_N = 0
+ACCENT_C = 1
+ACCENT_S = 2
+
+TEST_RATIO = 0.2
+VALID_RATIO = 0.2
+
 def get_mean():
     # voice_list = []
     all_data = None
@@ -173,9 +184,91 @@ def standardize_and_save():
         with open(feature_file, 'wb') as f:
             pickle.dump(data_per_type, f, pickle.HIGHEST_PROTOCOL)
             print ('dump data to file ', feature_file)
+# def make_arrays(nb_rows):
+#   if nb_rows:
+#     dataset = np.ndarray((nb_rows, FEATURE_SIZE, NO_FRAME), dtype=np.float64)
+#     labels = np.ndarray(nb_rows, dtype=np.int32)
+#   else:
+#     dataset, labels = None, None
+#   return dataset, labels
+
+def gender_accent(label):
+    g, a = label.split('_')
+    gn, an = -1, -1
+    if g == 'male':
+        gn = GENDER_M
+    elif g == 'female':
+        gn = GENDER_F
+    if a == 'north':
+        an =  ACCENT_N
+    elif a == 'south':
+        an = ACCENT_S
+    elif a == 'central':
+        an = ACCENT_C
+    if an < 0:
+        print (label)
+    assert gn >= 0
+    assert an >= 0
+    return (gn, an)
+
+def randomize(dataset, labels):
+  permutation = np.random.permutation(labels.shape[0])
+  shuffled_dataset = dataset[permutation,:,:]
+  shuffled_labels = labels[permutation]
+  return shuffled_dataset, shuffled_labels
+
+def split_train_valid_test(dtype='accent'):
+    test_input, test_labels = None, []
+    train_input, train_labels = None, []
+    valid_input, valid_labels = None, []
+    for l in os.listdir(TRAIN_FEATURES):
+        data = None
+        with open(os.path.join(TRAIN_FEATURES, l), 'rb') as f:
+            data = pickle.load(f)
+        no_voice = data.shape[0]
+        test_count = round(TEST_RATIO * no_voice)
+        valid_count = round(VALID_RATIO * no_voice)
+        train_count = no_voice - test_count - valid_count
+        gender, accent = gender_accent(l.replace('.pickle', ''))
+        label = accent if dtype == 'accent' else gender
+
+        np.random.shuffle(data)
+        ti = data[:test_count,:,:]
+        assert ti.shape[0] == test_count
+        test_input = np.vstack((test_input, ti)) if test_input is not None else ti        
+        test_labels = np.concatenate((test_labels, np.full((test_count, ), label)))
+
+        vi = data[test_count:(test_count + valid_count),:,:]
+        assert vi.shape[0] == valid_count
+        valid_input = np.vstack((valid_input, vi)) if valid_input is not None else vi
+        valid_labels = np.concatenate((valid_labels, np.full((valid_count, ), label)))
+
+        tri = data[(test_count + valid_count):,:,:]
+        assert tri.shape[0] == train_count
+        train_input = np.vstack((train_input, tri)) if train_input is not None else tri
+        train_labels = np.concatenate((train_labels, np.full((train_count, ), label)))
+
+    print ('train input ', train_input.shape, ' label ', train_labels.shape)
+    print ('test input ', test_input.shape, ' label ', test_labels.shape)
+    print ('valid input ', valid_input.shape, ' label ', valid_labels.shape)
+    # randomize
+    train_input, train_labels = randomize(train_input, train_labels)
+    test_input, test_labels = randomize(test_input, test_labels)
+    valid_input, valid_labels = randomize(valid_input, valid_labels)
+
+    output_file = 'randomized_' + dtype + '_data.pickle'
+    dataset = dict(train_input=train_input,
+        train_labels=train_labels,
+        valid_input=valid_input,
+        valid_labels=valid_labels,
+        test_input=test_input,
+        test_labels=test_labels)
+    with open(os.path.join(TRAIN_FEATURES, output_file), 'wb') as f:
+        pickle.dump(dataset, f, pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
-    standardize_and_save()
+    split_train_valid_test()
+    # standardize_and_save()
     # features = extract_voice_feature('/media/tamvm/DATA/AiChallenge/train/female_central/6056354cd5b14a8d99183ab9e5fc638d_01771.mp3')
     # print ('extract takes ', (datetime.datetime.now() - start).total_seconds())
     # features = fix_size(features)
