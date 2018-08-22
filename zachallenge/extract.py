@@ -5,26 +5,27 @@ import numpy as np
 import matplotlib.pyplot as plt
 import datetime
 import pickle
+import constants 
 
-BASE = '/media/tamvm/DATA/AiChallenge'
+BASE = constants.BASE
 TRAIN_INPUT = os.path.join(BASE, 'train')
 TRAIN_TEMP = os.path.join(BASE, 'raw_features')
-TRAIN_FEATURES = os.path.join(BASE, 'features')
+TRAIN_FEATURES =constants.TRAIN_FEATURES
 MIN_VOICE_FREQ = 70
 MAX_VOICE_FREQ = 280
-NO_FRAME = 259
-N_MFCC = 13
-N_MELS = 26
-FEATURE_SIZE = N_MFCC * 2 + N_MELS
+NO_FRAME = constants.NO_FRAME
+N_MFCC = constants.N_MFCC
+N_MELS = constants.N_MELS
+FEATURE_SIZE = constants.FEATURE_SIZE
 SAMPLE_PER_FRAME = 256
 
 # Gender: Female: 0, Male: 1
 # Accent: North: 0, Central: 1, South: 2
-GENDER_M = 1
-GENDER_F = 0
-ACCENT_N = 0
-ACCENT_C = 1
-ACCENT_S = 2
+GENDER_M = constants.GENDER_M
+GENDER_F = constants.GENDER_F
+ACCENT_N = constants.ACCENT_N
+ACCENT_C = constants.ACCENT_C
+ACCENT_S = constants.ACCENT_S
 
 TEST_RATIO = 0.2
 VALID_RATIO = 0

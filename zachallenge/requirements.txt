@@ -1,3 +1,5 @@
 numpy==1.15.0
 librosa==0.6.2
 scikit-learn==0.19.2
+Keras==2.2.2
+tensorflow==1.10.0
