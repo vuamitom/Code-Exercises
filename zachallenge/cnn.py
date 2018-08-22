@@ -4,6 +4,10 @@ from keras import backend as K
 import keras
 import common
 import constants
+import datetime
+import os
+
+BATCH_SIZE = 32
 
 def get_n_classes(dtype='accent'):
     return 3 if dtype == 'accent' else 2
@@ -52,6 +56,10 @@ def create_model(input_shape, n_classes):
      
     return model
 
+def save_model(model):
+    of = os.path.join(os.path.dirname(__file__), 'cnn_' + str(datetime.datetime.now()) + '.h5')
+    model.save(of)
+
 def get_validation_data(train_input, train_labels):
     no_recs = train_input.shape[0]
     valid_size = round(0.2 * no_recs)
@@ -92,14 +100,20 @@ def train_and_predict(train_input, train_labels, test_input, test_labels):
     valid_labels = keras.utils.to_categorical(valid_labels, n_classes)
 
     m = create_model(get_input_shape(), n_classes)
-    batch_size = 32
+    batch_size = BATCH_SIZE
     epochs = 2
     m.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     history = m.fit(train_input, train_labels, batch_size=batch_size, epochs=epochs, verbose=1, 
                    validation_data=(valid_input, valid_labels))    
     # write model to file
+    save_model(m)
     m.evaluate(test_input, test_labels)    
     plot_and_show_history(history)
+
+def load_model_and_predict(model_path, test_input):
+    model = keras.models.load_model(model_path)
+    test_input = reshape_input(test_input)
+    model.predict(test_input, batch_size=BATCH_SIZE, verbose=1)
 
 if __name__ == '__main__':
     train_input, train_labels, test_input, test_labels = common.get_accent_data()
