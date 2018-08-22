@@ -27,7 +27,7 @@ ACCENT_C = 1
 ACCENT_S = 2
 
 TEST_RATIO = 0.2
-VALID_RATIO = 0.2
+VALID_RATIO = 0
 
 def get_mean():
     # voice_list = []
@@ -236,17 +236,17 @@ def split_train_valid_test(dtype='accent'):
         ti = data[:test_count,:,:]
         assert ti.shape[0] == test_count
         test_input = np.vstack((test_input, ti)) if test_input is not None else ti        
-        test_labels = np.concatenate((test_labels, np.full((test_count, ), label)))
+        test_labels = np.concatenate((test_labels, np.full((test_count, ), label, dtype=np.int32)))
 
         vi = data[test_count:(test_count + valid_count),:,:]
         assert vi.shape[0] == valid_count
         valid_input = np.vstack((valid_input, vi)) if valid_input is not None else vi
-        valid_labels = np.concatenate((valid_labels, np.full((valid_count, ), label)))
+        valid_labels = np.concatenate((valid_labels, np.full((valid_count, ), label, dtype=np.int32)))
 
         tri = data[(test_count + valid_count):,:,:]
         assert tri.shape[0] == train_count
         train_input = np.vstack((train_input, tri)) if train_input is not None else tri
-        train_labels = np.concatenate((train_labels, np.full((train_count, ), label)))
+        train_labels = np.concatenate((train_labels, np.full((train_count, ), label, dtype=np.int32)))
 
     print ('train input ', train_input.shape, ' label ', train_labels.shape)
     print ('test input ', test_input.shape, ' label ', test_labels.shape)
