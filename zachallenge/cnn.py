@@ -53,6 +53,11 @@ def create_model(input_shape, n_classes):
     model.add(Conv2D(64, (3, 3), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
+
+    model.add(Conv2D(32, (3, 3), padding='same', activation='relu'))
+    model.add(Conv2D(32, (3, 3), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
  
     model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
     model.add(Conv2D(64, (3, 3), activation='relu'))
@@ -62,7 +67,7 @@ def create_model(input_shape, n_classes):
     model.add(Flatten())
     model.add(Dense(512, activation='relu'))
     model.add(Dropout(0.5))
-    model.add(Dense(n_classes, activation='softmax', kernel_regularizer=regularizers.l2(0.01)))
+    model.add(Dense(n_classes, activation='softmax'))
      
     return model
 
@@ -99,7 +104,7 @@ def plot_and_show_history(history):
     plt.title('Accuracy Curves',fontsize=16)
     plt.show()
 
-def train_and_predict(train_input, train_labels, test_input, test_labels, dtype='accent'):
+def train_and_predict(m, train_input, train_labels, test_input, test_labels, dtype='accent'):
     train_input, train_labels, valid_input, valid_labels = get_validation_data(train_input, train_labels)
     train_input  = reshape_input(train_input)
     test_input  = reshape_input(test_input)
@@ -108,19 +113,18 @@ def train_and_predict(train_input, train_labels, test_input, test_labels, dtype=
     train_labels = keras.utils.to_categorical(train_labels, n_classes)
     test_labels = keras.utils.to_categorical(test_labels, n_classes)
     valid_labels = keras.utils.to_categorical(valid_labels, n_classes)
-
-    m = create_model(get_input_shape(), n_classes)
     batch_size = BATCH_SIZE
     epochs = 7
-    m.compile(optimizer=Adam(lr=0.0005), loss='categorical_crossentropy', metrics=['accuracy'])
+    if m is None:
+        m = create_model(get_input_shape(), n_classes)    
+        m.compile(optimizer=Adam(lr=0.0005), loss='categorical_crossentropy', metrics=['accuracy'])        
     history = m.fit(train_input, train_labels, batch_size=batch_size, epochs=epochs, verbose=1, 
                    validation_data=(valid_input, valid_labels))    
     # write model to file
-    save_model(m)
+    save_model(m, dtype)
     score, acc = m.evaluate(test_input, test_labels)
     print ('test score: ', score)
     print ('test accu : ', acc)
-
     plot_and_show_history(history)
 
 def load_model_and_predict(model_path, test_input):
@@ -131,4 +135,9 @@ def load_model_and_predict(model_path, test_input):
 
 if __name__ == '__main__':
     train_input, train_labels, test_input, test_labels = common.get_combined_data()
-    train_and_predict(train_input, train_labels, test_input, test_labels, 'combined')
+    start_over = False
+    if start_over:
+        train_and_predict(None, train_input, train_labels, test_input, test_labels, 'combined')
+    else:
+        m = keras.models.load_model(os.path.join(os.path.dirname(__file__), 'cnn_combined_acc063_7epocs.h5'))
+        train_and_predict(m, train_input, train_labels, test_input, test_labels, 'combined')

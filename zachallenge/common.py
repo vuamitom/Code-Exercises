@@ -8,7 +8,7 @@ TRAIN_FEATURES = constants.TRAIN_FEATURES
 
 def get_data(fn):
     dataset = None
-    with open (os.path.join(TRAIN_FEATURES, fn), 'rb') as f:
+    with open (os.path.join(BASE, fn), 'rb') as f:
         dataset = pickle.load(f)
     train_input = dataset['train_input']
     train_labels = dataset['train_labels']

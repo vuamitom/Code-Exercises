@@ -18,7 +18,8 @@ N_MFCC = constants.N_MFCC
 N_MELS = constants.N_MELS
 FEATURE_SIZE = constants.FEATURE_SIZE
 SAMPLE_PER_FRAME = 256
-
+TEST_DIR = None
+TEST_PREPROSSED_DIR = None
 # Gender: Female: 0, Male: 1
 # Accent: North: 0, Central: 1, South: 2
 GENDER_M = constants.GENDER_M
@@ -144,6 +145,14 @@ def extract_voice_feature(fp):
     # plt.show()
     return np.vstack((spectrogram, mfccs, delta))
 
+def load_means_and_stds():
+    mean_std = None
+    with open(os.path.join(BASE, 'feature_mean_std.pickle'), 'rb') as f:
+        mean_std = pickle.load(f)
+    means = mean_std.take(0, axis=0)
+    stds = mean_std.take(1, axis=0)
+    return means, stds
+
 def standardize_and_save():
     try:        
         # make output dir
@@ -155,11 +164,12 @@ def standardize_and_save():
         print ('Already extracted')
         return None
 
-    mean_std = None
-    with open(os.path.join(BASE, 'feature_mean_std.pickle'), 'rb') as f:
-        mean_std = pickle.load(f)
-    means = mean_std.take(0, axis=0)
-    stds = mean_std.take(1, axis=0)
+    # mean_std = None
+    # with open(os.path.join(BASE, 'feature_mean_std.pickle'), 'rb') as f:
+    #     mean_std = pickle.load(f)
+    # means = mean_std.take(0, axis=0)
+    # stds = mean_std.take(1, axis=0)
+    means, stds = load_means_and_stds()
     # print (means)
     for l in os.listdir(TRAIN_TEMP):
         print ('load data for ', l)
@@ -277,8 +287,38 @@ def split_train_valid_test(dtype='accent'):
         valid_labels=valid_labels,
         test_input=test_input,
         test_labels=test_labels)
-    with open(os.path.join(TRAIN_FEATURES, output_file), 'wb') as f:
+    with open(os.path.join(BASE, output_file), 'wb') as f:
         pickle.dump(dataset, f, pickle.HIGHEST_PROTOCOL)
+
+def preprocess_test_data():
+    output_dir = os.path.join(BASE, 'test_preprocessed')
+    try:
+        os.mkdir(output_dir)
+    except FileExistsError:
+        pass
+
+    means, stds = load_means_and_stds()
+
+    test_list = os.listdir(TEST_DIR)
+    for r in test_list:            
+        fp = os.path.join(TEST_DIR, r)
+        print ('pre-process: ', fp)
+        # start = datetime.datetime.now()
+        features = extract_voice_feature(fp)
+        # print ('extract takes ', (datetime.datetime.now() - start).total_seconds())
+        features = fix_size(features)
+        print (features.shape)
+        row, col = features.shape        
+        assert row == FEATURE_SIZE
+        assert col == NO_FRAME
+        # standardize 
+        features = ((features.T - means) / stds).T
+        row, col = features.shape
+        assert row == FEATURE_SIZE
+        assert col == NO_FRAME
+        # write to file
+        with open(os.path.join(output_dir, r + '.pickle'), 'wb') as f:
+            pickle.dump(features, f, pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
     split_train_valid_test('combined')
