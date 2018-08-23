@@ -218,6 +218,19 @@ def randomize(dataset, labels):
   shuffled_labels = labels[permutation]
   return shuffled_dataset, shuffled_labels
 
+def get_label(gender, accent, dtype):
+    assert 0 <= gender <= 1
+    assert 0 <= accent <= 2
+    if dtype == 'accent':
+        return accent
+    elif dtype == 'gender':
+        return gender
+    elif dtype == 'combined':
+        return accent * 2 + gender
+    else:
+        assert False
+
+
 def split_train_valid_test(dtype='accent'):
     test_input, test_labels = None, []
     train_input, train_labels = None, []
@@ -231,7 +244,7 @@ def split_train_valid_test(dtype='accent'):
         valid_count = round(VALID_RATIO * no_voice)
         train_count = no_voice - test_count - valid_count
         gender, accent = gender_accent(l.replace('.pickle', ''))
-        label = accent if dtype == 'accent' else gender
+        label = get_label(gender, accent, dtype)
 
         np.random.shuffle(data)
         ti = data[:test_count,:,:]
@@ -268,7 +281,7 @@ def split_train_valid_test(dtype='accent'):
         pickle.dump(dataset, f, pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
-    split_train_valid_test()
+    split_train_valid_test('combined')
     # standardize_and_save()
     # features = extract_voice_feature('/media/tamvm/DATA/AiChallenge/train/female_central/6056354cd5b14a8d99183ab9e5fc638d_01771.mp3')
     # print ('extract takes ', (datetime.datetime.now() - start).total_seconds())

@@ -10,7 +10,7 @@ def random_forest(train_input, train_labels, test_input, test_labels):
     # Mean accuracy score: 0.597
     v_c = train_input.shape[0]
     t_c = test_input.shape[0]
-    rf = RandomForestClassifier(n_estimators=100, oob_score=True, random_state=123456)
+    rf = RandomForestClassifier(n_estimators=200, oob_score=True, random_state=123456)
     start_time = datetime.datetime.now()
     rf.fit(train_input.reshape(v_c, -1), train_labels)
     print ('done training in seconds: ', (datetime.datetime.now() - start_time).total_seconds())
@@ -23,6 +23,6 @@ def random_forest(train_input, train_labels, test_input, test_labels):
 
 
 if __name__ == '__main__':
-    train_input, train_labels, test_input, test_labels = common.get_accent_data()
+    train_input, train_labels, test_input, test_labels = common.get_combined_data()
     # print (test_labels)
     random_forest(train_input, train_labels, test_input, test_labels)

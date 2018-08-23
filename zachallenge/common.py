@@ -6,10 +6,9 @@ BASE = constants.BASE
 TRAIN_FEATURES = constants.TRAIN_FEATURES
 
 
-
-def get_accent_data():
+def get_data(fn):
     dataset = None
-    with open (os.path.join(TRAIN_FEATURES, 'randomized_accent_data.pickle'), 'rb') as f:
+    with open (os.path.join(TRAIN_FEATURES, fn), 'rb') as f:
         dataset = pickle.load(f)
     train_input = dataset['train_input']
     train_labels = dataset['train_labels']
@@ -23,3 +22,9 @@ def get_accent_data():
     # train_labels = np.concatenate((train_labels, valid_labels))
     del dataset
     return train_input, train_labels, test_input, test_labels
+
+def get_accent_data():
+    return get_data('randomized_accent_data.pickle')
+
+def get_combined_data():
+    return get_data('randomized_combined_data.pickle')

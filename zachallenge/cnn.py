@@ -1,16 +1,26 @@
 from keras.models import Sequential
 from keras.layers import Dense, Conv2D, MaxPooling2D, Dropout, Flatten
 from keras import backend as K
+from keras.optimizers import Adam
 import keras
 import common
 import constants
-import datetime
+import time
 import os
-
+from keras import regularizers
+import matplotlib.pyplot as plt
 BATCH_SIZE = 32
 
 def get_n_classes(dtype='accent'):
-    return 3 if dtype == 'accent' else 2
+
+    if dtype == 'accent':
+        return 3
+    elif dtype == 'gender':
+        return 2
+    elif dtype == 'combined':
+        return 6
+    else:
+        assert False
 
 def get_input_shape():
     feature_size = constants.FEATURE_SIZE
@@ -52,12 +62,12 @@ def create_model(input_shape, n_classes):
     model.add(Flatten())
     model.add(Dense(512, activation='relu'))
     model.add(Dropout(0.5))
-    model.add(Dense(n_classes, activation='softmax'))
+    model.add(Dense(n_classes, activation='softmax', kernel_regularizer=regularizers.l2(0.01)))
      
     return model
 
-def save_model(model):
-    of = os.path.join(os.path.dirname(__file__), 'cnn_' + str(datetime.datetime.now()) + '.h5')
+def save_model(model, dtype='accent'):
+    of = os.path.join(os.path.dirname(__file__), 'cnn_' + dtype + '_' + str(time.time()) + '.h5')
     model.save(of)
 
 def get_validation_data(train_input, train_labels):
@@ -89,32 +99,36 @@ def plot_and_show_history(history):
     plt.title('Accuracy Curves',fontsize=16)
     plt.show()
 
-def train_and_predict(train_input, train_labels, test_input, test_labels):
+def train_and_predict(train_input, train_labels, test_input, test_labels, dtype='accent'):
     train_input, train_labels, valid_input, valid_labels = get_validation_data(train_input, train_labels)
     train_input  = reshape_input(train_input)
     test_input  = reshape_input(test_input)
     valid_input  = reshape_input(valid_input)
-    n_classes = get_n_classes()
+    n_classes = get_n_classes(dtype)
     train_labels = keras.utils.to_categorical(train_labels, n_classes)
     test_labels = keras.utils.to_categorical(test_labels, n_classes)
     valid_labels = keras.utils.to_categorical(valid_labels, n_classes)
 
     m = create_model(get_input_shape(), n_classes)
     batch_size = BATCH_SIZE
-    epochs = 2
-    m.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    epochs = 7
+    m.compile(optimizer=Adam(lr=0.0005), loss='categorical_crossentropy', metrics=['accuracy'])
     history = m.fit(train_input, train_labels, batch_size=batch_size, epochs=epochs, verbose=1, 
                    validation_data=(valid_input, valid_labels))    
     # write model to file
     save_model(m)
-    m.evaluate(test_input, test_labels)    
+    score, acc = m.evaluate(test_input, test_labels)
+    print ('test score: ', score)
+    print ('test accu : ', acc)
+
     plot_and_show_history(history)
 
 def load_model_and_predict(model_path, test_input):
     model = keras.models.load_model(model_path)
     test_input = reshape_input(test_input)
-    model.predict(test_input, batch_size=BATCH_SIZE, verbose=1)
+    model.predict_classes(test_input, batch_size=BATCH_SIZE, verbose=1)
+
 
 if __name__ == '__main__':
-    train_input, train_labels, test_input, test_labels = common.get_accent_data()
-    train_and_predict(train_input, train_labels, test_input, test_labels)
+    train_input, train_labels, test_input, test_labels = common.get_combined_data()
+    train_and_predict(train_input, train_labels, test_input, test_labels, 'combined')
