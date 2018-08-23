@@ -28,3 +28,24 @@ def get_accent_data():
 
 def get_combined_data():
     return get_data('randomized_combined_data.pickle')
+
+def get_n_classes(dtype='accent'):
+
+    if dtype == 'accent':
+        return 3
+    elif dtype == 'gender':
+        return 2
+    elif dtype == 'combined':
+        return 6
+    else:
+        assert False
+
+
+def get_validation_data(train_input, train_labels):
+    no_recs = train_input.shape[0]
+    valid_size = round(0.2 * no_recs)
+    valid_input, valid_labels = train_input[:valid_size,:,:], train_labels[:valid_size]
+    train_input, train_labels = train_input[valid_size:,:,:], train_labels[valid_size:]
+    assert len(valid_labels) == valid_size
+    assert len(train_labels) == no_recs - valid_size
+    return train_input, train_labels, valid_input, valid_labels
