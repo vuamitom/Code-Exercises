@@ -8,6 +8,7 @@ import constants
 import time
 import os
 from keras import regularizers
+from keras.callbacks import ModelCheckpoint
 import matplotlib.pyplot as plt
 BATCH_SIZE = 32
 
@@ -31,6 +32,35 @@ def reshape_input(x_train):
     else:
         x_train = x_train.reshape(x_train.shape[0], feature_size, frame_size, 1)
     return x_train
+
+def create_model_4(input_shape, n_classes):
+    model = Sequential()
+    model.add(Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=input_shape))
+    model.add(Conv2D(32, (3, 3), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+ 
+    model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
+    model.add(Conv2D(64, (3, 3), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+
+    # model.add(Conv2D(32, (3, 3), padding='same', activation='relu'))
+    # model.add(Conv2D(32, (3, 3), activation='relu'))
+    # model.add(MaxPooling2D(pool_size=(2, 2)))
+    # model.add(Dropout(0.25))
+ 
+    model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
+    model.add(Conv2D(64, (3, 3), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+ 
+    model.add(Flatten())
+    model.add(Dense(256, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(n_classes, activation='softmax'))
+     
+    return model
 
 def create_model(input_shape, n_classes):
     model = Sequential()
@@ -60,6 +90,64 @@ def create_model(input_shape, n_classes):
     model.add(Dense(n_classes, activation='softmax'))
      
     return model
+
+def create_model_2(input_shape, n_classes):
+    model = Sequential()
+    model.add(Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=input_shape))
+    model.add(Conv2D(32, (3, 3), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+ 
+    model.add(Conv2D(32, (5, 5), padding='same', activation='relu'))
+    model.add(Conv2D(32, (5, 5), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+
+    # model.add(Conv2D(32, (3, 3), padding='same', activation='relu'))
+    # model.add(Conv2D(32, (3, 3), activation='relu'))
+    # model.add(MaxPooling2D(pool_size=(2, 2)))
+    # model.add(Dropout(0.25))
+ 
+    model.add(Conv2D(32, (3, 3), padding='same', activation='relu'))
+    model.add(Conv2D(32, (3, 3), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+
+    model.add(Conv2D(32, (3, 3), padding='same', activation='relu'))
+    model.add(Conv2D(32, (3, 3), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.5))
+ 
+    model.add(Flatten())
+    model.add(Dense(128, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(n_classes, activation='softmax'))
+     
+    return model
+
+def create_model_3(input_shape, n_classes):
+    model = Sequential()
+    model.add(Conv2D(64, (5, 5), padding='same', activation='relu', input_shape=input_shape))
+    model.add(Conv2D(64, (5, 5), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+ 
+    model.add(Conv2D(64, (5, 5), padding='same', activation='relu'))
+    model.add(Conv2D(64, (5, 5), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+
+    # model.add(Conv2D(32, (3, 3), padding='same', activation='relu'))
+    # model.add(Conv2D(32, (3, 3), activation='relu'))
+    # model.add(MaxPooling2D(pool_size=(2, 2)))
+    # model.add(Dropout(0.25))
+ 
+    model.add(Flatten())
+    model.add(Dense(512, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(n_classes, activation='softmax'))
+    return model
+
 
 def save_model(model, dtype='accent', name=None):
     name = name if name is not None else 'cnn_' + dtype + '_' + str(time.time()) + '.h5'
@@ -112,7 +200,7 @@ def train_and_predict(m, checkpoint_filepath, train_input, train_labels, test_in
     score, acc = m.evaluate(test_input, test_labels)
     print ('test score: ', score)
     print ('test accu : ', acc)
-    plot_and_show_history(history)
+    # plot_and_show_history(history)
 
 def load_model_and_predict(model_path, test_input):
     model = keras.models.load_model(model_path)
@@ -123,9 +211,30 @@ def load_model_and_predict(model_path, test_input):
 if __name__ == '__main__':
     train_input, train_labels, test_input, test_labels = common.get_combined_data()
     start_over = True
-    checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'model_5x5_3layers_001lr.h5')
+    checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'model_5x5_3layers_001lr_512.h5')
     if start_over:
-        train_and_predict(None, checkpoint_filepath, train_input, train_labels, test_input, test_labels, 'combined')
+        print ('=============== begining to write to ', checkpoint_filepath)
+        model = create_model(get_input_shape(), common.get_n_classes('combined'))
+        model.compile(optimizer=Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'])        
+        train_and_predict(model, checkpoint_filepath, train_input, train_labels, test_input, test_labels, 'combined')
+
+        checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'model_3x3_3layers_001lr_256.h5')
+        print ('=============== begining to write to ', checkpoint_filepath)
+        model = create_model_4(get_input_shape(), common.get_n_classes('combined'))
+        model.compile(optimizer=Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'])        
+        train_and_predict(model, checkpoint_filepath, train_input, train_labels, test_input, test_labels, 'combined')
+
+        checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'model_3x3_4layers_001lr_256.h5')
+        print ('=============== begining to write to ', checkpoint_filepath)
+        model = create_model_2(get_input_shape(), common.get_n_classes('combined'))
+        model.compile(optimizer=Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'])
+        train_and_predict(model, checkpoint_filepath, train_input, train_labels, test_input, test_labels, 'combined')
+
+        checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'model_5x5_2layers_001lr_512.h5')
+        print ('=============== begining to write to ', checkpoint_filepath)
+        model = create_model_3(get_input_shape(), common.get_n_classes('combined'))
+        model.compile(optimizer=Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'])
+        train_and_predict(model, checkpoint_filepath, train_input, train_labels, test_input, test_labels, 'combined')
     else:
         m = keras.models.load_model(os.path.join(os.path.dirname(__file__), 'cnn_combined_acc063_7epocs.h5'))
         train_and_predict(m, checkpoint_filepath, train_input, train_labels, test_input, test_labels, 'combined')
