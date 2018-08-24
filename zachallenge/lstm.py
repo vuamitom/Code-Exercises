@@ -8,6 +8,7 @@ from keras.callbacks import ModelCheckpoint
 import numpy as np
 import common
 import constants
+import os
 
 def create_model(n_classes, batch_size, stateful):
     model = Sequential()
@@ -24,13 +25,13 @@ def create_model(n_classes, batch_size, stateful):
 def reshape_input(train_input):
     # to be (samples, time frame, features)
     shape = train_input.shape
-    new_input = np.ndarray(shape=(shape[0], shape[2], shape[1]),
+    new_input = np.ndarray(shape=(shape[0], shape[2], 26),
                          dtype=np.float64)
     for r in range(0, shape[0]):
-        new_input[r,:,:] = train_input[r].T 
+        new_input[r,:,:] = train_input[r][0:26,:].T 
     return new_input
 
-def train_and_predict(train_input, train_labels, test_input, test_labels):
+def train_and_predict(train_input, train_labels, test_input, test_labels, checkpoint_filepath):
 
     train_input, train_labels, valid_input, valid_labels = common.get_validation_data(train_input, train_labels)
 
@@ -54,10 +55,15 @@ def train_and_predict(train_input, train_labels, test_input, test_labels):
     m.compile(loss='categorical_crossentropy',
               optimizer=Adam(lr=0.001),
               metrics=['accuracy'])
+
+    checkpoint = ModelCheckpoint(checkpoint_filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
+    callbacks_list = [checkpoint] 
+
     m.fit(train_input, train_labels,
             batch_size=batch_size,
           epochs=15,
           verbose=1,
+          callbacks=callbacks_list,
           validation_data=(valid_input, valid_labels))
     score, acc = m.evaluate(test_input, test_labels)
     print ('test score: ', score)
@@ -68,4 +74,5 @@ if __name__ == '__main__':
     train_input = reshape_input(train_input)
     test_input = reshape_input(test_input)
     
-    train_and_predict(train_input, train_labels, test_input, test_labels)
+    checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'lstm_256_fbank_02dropout.h5')
+    train_and_predict(train_input, train_labels, test_input, test_labels, checkpoint_filepath)

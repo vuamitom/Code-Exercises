@@ -33,7 +33,7 @@ def reshape_input(x_train):
         x_train = x_train.reshape(x_train.shape[0], feature_size, frame_size, 1)
     return x_train
 
-def create_model_4(input_shape, n_classes):
+def create_model(input_shape, n_classes):
     model = Sequential()
     model.add(Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=input_shape))
     model.add(Conv2D(32, (3, 3), activation='relu'))
@@ -62,7 +62,7 @@ def create_model_4(input_shape, n_classes):
      
     return model
 
-def create_model(input_shape, n_classes):
+def create_model_4(input_shape, n_classes):
     model = Sequential()
     model.add(Conv2D(32, (5, 5), padding='same', activation='relu', input_shape=input_shape))
     model.add(Conv2D(32, (5, 5), activation='relu'))
@@ -211,14 +211,14 @@ def load_model_and_predict(model_path, test_input):
 if __name__ == '__main__':
     train_input, train_labels, test_input, test_labels = common.get_combined_data()
     start_over = True
-    checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'model_5x5_3layers_001lr_512.h5')
+    checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'model_3x3_3layers_001lr_256.h5')
     if start_over:
         print ('=============== begining to write to ', checkpoint_filepath)
         model = create_model(get_input_shape(), common.get_n_classes('combined'))
         model.compile(optimizer=Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'])        
         train_and_predict(model, checkpoint_filepath, train_input, train_labels, test_input, test_labels, 'combined')
 
-        checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'model_3x3_3layers_001lr_256.h5')
+        checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'model_5x5_3layers_001lr_512.h5')
         print ('=============== begining to write to ', checkpoint_filepath)
         model = create_model_4(get_input_shape(), common.get_n_classes('combined'))
         model.compile(optimizer=Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'])        
