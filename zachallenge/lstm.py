@@ -28,10 +28,10 @@ def reshape_input(train_input):
     new_input = np.ndarray(shape=(shape[0], shape[2], 26),
                          dtype=np.float64)
     for r in range(0, shape[0]):
-        new_input[r,:,:] = train_input[r][0:26,:].T 
+        new_input[r,:,:] = train_input[r][26:,:].T 
     return new_input
 
-def train_and_predict(train_input, train_labels, test_input, test_labels, checkpoint_filepath):
+def train_and_predict(train_input, train_labels, test_input, test_labels, checkpoint_filepath, model=None):
 
     train_input, train_labels, valid_input, valid_labels = common.get_validation_data(train_input, train_labels)
 
@@ -40,7 +40,7 @@ def train_and_predict(train_input, train_labels, test_input, test_labels, checkp
     test_labels = keras.utils.to_categorical(test_labels, n_classes)
     valid_labels = keras.utils.to_categorical(valid_labels, n_classes)
 
-    batch_size = 32
+    batch_size = 64
     stateful = False
     if stateful:
         train_size = int(batch_size * int(train_labels.shape[0] / batch_size))
@@ -51,10 +51,12 @@ def train_and_predict(train_input, train_labels, test_input, test_labels, checkp
         valid_input = valid_input[0:valid_size, :,:]
         valid_labels = valid_labels[0:valid_size] 
     
-    m = create_model(n_classes, batch_size, stateful)
-    m.compile(loss='categorical_crossentropy',
-              optimizer=Adam(lr=0.001),
-              metrics=['accuracy'])
+    m = model
+    if m is None:
+        m = create_model(n_classes, batch_size, stateful)
+        m.compile(loss='categorical_crossentropy',
+                  optimizer=Adam(lr=0.001),
+                  metrics=['accuracy'])
 
     checkpoint = ModelCheckpoint(checkpoint_filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
     callbacks_list = [checkpoint] 
@@ -74,5 +76,12 @@ if __name__ == '__main__':
     train_input = reshape_input(train_input)
     test_input = reshape_input(test_input)
     
-    checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'lstm_256_fbank_02dropout.h5')
-    train_and_predict(train_input, train_labels, test_input, test_labels, checkpoint_filepath)
+    checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'lstm_256_mfccs_delta_02dropout.h5')
+    start_over = False
+    if start_over:
+        train_and_predict(train_input, train_labels, test_input, test_labels, checkpoint_filepath, None)
+    else:
+        print ('retrain existing model ', checkpoint_filepath)
+        model = keras.models.load_model(checkpoint_filepath)
+        checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'lstm_256_mfccs_delta_02dropout_run2.h5')
+        train_and_predict(train_input, train_labels, test_input, test_labels, checkpoint_filepath, model)

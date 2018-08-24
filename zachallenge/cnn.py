@@ -210,7 +210,7 @@ def load_model_and_predict(model_path, test_input):
 
 if __name__ == '__main__':
     train_input, train_labels, test_input, test_labels = common.get_combined_data()
-    start_over = True
+    start_over = False
     checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'model_3x3_3layers_001lr_256.h5')
     if start_over:
         print ('=============== begining to write to ', checkpoint_filepath)
@@ -236,5 +236,7 @@ if __name__ == '__main__':
         model.compile(optimizer=Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'])
         train_and_predict(model, checkpoint_filepath, train_input, train_labels, test_input, test_labels, 'combined')
     else:
-        m = keras.models.load_model(os.path.join(os.path.dirname(__file__), 'cnn_combined_acc063_7epocs.h5'))
+        # m = keras.models.load_model(os.path.join(os.path.dirname(__file__), 'cnn_combined_acc063_7epocs.h5'))
+        m = keras.models.load_model(os.path.join(os.path.dirname(__file__), 'model_5x5_3layers_001lr_512.h5'))
+        checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'cnn_5x5_3layers_001lr_512.h5')
         train_and_predict(m, checkpoint_filepath, train_input, train_labels, test_input, test_labels, 'combined')
