@@ -18,7 +18,7 @@ N_MFCC = constants.N_MFCC
 N_MELS = constants.N_MELS
 FEATURE_SIZE = constants.FEATURE_SIZE
 SAMPLE_PER_FRAME = 256
-TEST_DIR = None
+TEST_DIR = os.path.join(BASE, 'public_test')
 TEST_PREPROSSED_DIR = None
 # Gender: Female: 0, Male: 1
 # Accent: North: 0, Central: 1, South: 2
@@ -321,7 +321,8 @@ def preprocess_test_data():
             pickle.dump(features, f, pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
-    split_train_valid_test('combined')
+    # split_train_valid_test('combined')
+    preprocess_test_data()
     # standardize_and_save()
     # features = extract_voice_feature('/media/tamvm/DATA/AiChallenge/train/female_central/6056354cd5b14a8d99183ab9e5fc638d_01771.mp3')
     # print ('extract takes ', (datetime.datetime.now() - start).total_seconds())

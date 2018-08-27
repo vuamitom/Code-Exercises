@@ -40,6 +40,10 @@ def get_n_classes(dtype='accent'):
     else:
         assert False
 
+def label_to_gender_accent(label):
+    gender = label % 2
+    accent = int(label / 2)
+    return gender, accent
 
 def get_validation_data(train_input, train_labels):
     no_recs = train_input.shape[0]

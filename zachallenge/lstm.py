@@ -42,6 +42,15 @@ def reshape_input(train_input):
         new_input[r,:,:] = train_input[r][26:,:].T 
     return new_input
 
+def reshape_input_var_length(train_input):
+    # to be (samples, time frame, features)
+    shape = train_input.shape
+    new_input = np.ndarray(shape=(shape[0], shape[2], 26),
+                         dtype=np.float64)
+    for r in range(0, shape[0]):
+        new_input[r,:,:] = train_input[r][26:,:].T 
+    return new_input
+
 def train_and_predict(train_input, train_labels, test_input, test_labels, checkpoint_filepath, model=None):
 
     train_input, train_labels, valid_input, valid_labels = common.get_validation_data(train_input, train_labels)
