@@ -24,10 +24,10 @@ def get_data(fn):
     return train_input, train_labels, test_input, test_labels
 
 def get_accent_data():
-    return get_data('randomized_accent_data.pickle')
+    return get_data('randomized_accent_data_long.pickle')
 
 def get_combined_data():
-    return get_data('randomized_combined_data.pickle')
+    return get_data(constants.EXTRACT_FEATURE_FILE)
 
 def get_n_classes(dtype='accent'):
 

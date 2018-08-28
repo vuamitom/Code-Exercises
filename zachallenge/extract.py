@@ -9,7 +9,7 @@ import constants
 
 BASE = constants.BASE
 TRAIN_INPUT = os.path.join(BASE, 'train')
-TRAIN_TEMP = os.path.join(BASE, 'raw_features')
+TRAIN_TEMP = os.path.join(BASE, 'raw_features_long')
 TRAIN_FEATURES =constants.TRAIN_FEATURES
 MIN_VOICE_FREQ = 70
 MAX_VOICE_FREQ = 280
@@ -17,7 +17,7 @@ NO_FRAME = constants.NO_FRAME
 N_MFCC = constants.N_MFCC
 N_MELS = constants.N_MELS
 FEATURE_SIZE = constants.FEATURE_SIZE
-SAMPLE_PER_FRAME = 256
+SAMPLE_PER_FRAME = 512
 TEST_DIR = os.path.join(BASE, 'public_test')
 TEST_PREPROSSED_DIR = None
 # Gender: Female: 0, Male: 1
@@ -56,7 +56,7 @@ def get_mean():
     assert len(means) == FEATURE_SIZE
     assert len(stds) == FEATURE_SIZE
     stat = np.vstack((means, stds))
-    stat_file = os.path.join(BASE, 'feature_mean_std.pickle')
+    stat_file = os.path.join(BASE, constants.MEAN_STD_FILE)
     with open(stat_file, 'wb') as f:
         pickle.dump(stat, f, pickle.HIGHEST_PROTOCOL)
 
@@ -147,7 +147,7 @@ def extract_voice_feature(fp):
 
 def load_means_and_stds():
     mean_std = None
-    with open(os.path.join(BASE, 'feature_mean_std.pickle'), 'rb') as f:
+    with open(os.path.join(BASE, constants.MEAN_STD_FILE), 'rb') as f:
         mean_std = pickle.load(f)
     means = mean_std.take(0, axis=0)
     stds = mean_std.take(1, axis=0)
@@ -280,7 +280,7 @@ def split_train_valid_test(dtype='accent'):
     test_input, test_labels = randomize(test_input, test_labels)
     valid_input, valid_labels = randomize(valid_input, valid_labels)
 
-    output_file = 'randomized_' + dtype + '_data.pickle'
+    output_file = 'randomized_' + dtype + '_data_long.pickle'
     dataset = dict(train_input=train_input,
         train_labels=train_labels,
         valid_input=valid_input,
@@ -291,7 +291,7 @@ def split_train_valid_test(dtype='accent'):
         pickle.dump(dataset, f, pickle.HIGHEST_PROTOCOL)
 
 def preprocess_test_data():
-    output_dir = os.path.join(BASE, 'test_preprocessed')
+    output_dir = constants.TEST_PROCCESSED_DIR # os.path.join(BASE, 'test_preprocessed_long')
     try:
         os.mkdir(output_dir)
     except FileExistsError:
@@ -321,8 +321,10 @@ def preprocess_test_data():
             pickle.dump(features, f, pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
-    # split_train_valid_test('combined')
-    preprocess_test_data()
+    # extract()
+    # get_mean()
+    split_train_valid_test('combined')
+    # preprocess_test_data()
     # standardize_and_save()
     # features = extract_voice_feature('/media/tamvm/DATA/AiChallenge/train/female_central/6056354cd5b14a8d99183ab9e5fc638d_01771.mp3')
     # print ('extract takes ', (datetime.datetime.now() - start).total_seconds())

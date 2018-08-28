@@ -96,22 +96,22 @@ if __name__ == '__main__':
     train_input = reshape_input(train_input)
     test_input = reshape_input(test_input)
     
-    checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'lstm_256_mfccs_delta_04dropout_run2.h5')
+    checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'long_model', 'lstm_256_mfccs_delta_02dropout.h5')
     start_over = False
     if start_over:
         train_and_predict(train_input, train_labels, test_input, test_labels, checkpoint_filepath, None)
     else:
         print ('retrain existing model ', checkpoint_filepath)
         model = keras.models.load_model(checkpoint_filepath)
-        model.optimizer = Adagrad(lr=0.0001)#.lr.set_value(0.0005)
+        model.optimizer = Adam(lr=0.0001)#.lr.set_value(0.0005)
         # model.compile(loss='categorical_crossentropy',
         #           optimizer=Adam(lr=0.0005),
         #           metrics=['accuracy'])
         print (model.summary())
-        # lstm = model.get_layer('dense_1')
+        lstm = model.get_layer('dense_1')
         # # lstm.dropout = 0.5
         # # lstm.recurrent_dropout = 0.5
-        # lstm.activity_regularizer=regularizers.l1_l2(l1=0.09, l2=0.09)
+        lstm.activity_regularizer=regularizers.l1_l2(l1=0.09, l2=0.09)
         # lstm.kernel_regularizer=regularizers.l1_l2(l1=0.01, l2=0.01)
         # print (lstm.get_config())
         
@@ -127,5 +127,5 @@ if __name__ == '__main__':
         #     m.layers[i].trainable_weights = model.layers[i].trainable_weights
         #     m.layers[i].set_weights(model.layers[i].get_weights())
 
-        checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'lstm_256_mfccs_delta_04dropout_run3.h5')
+        checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'long_model', 'lstm_256_mfccs_delta_02dropout_run2.h5')
         train_and_predict(train_input, train_labels, test_input, test_labels, checkpoint_filepath, model)

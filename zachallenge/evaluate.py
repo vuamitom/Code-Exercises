@@ -8,7 +8,7 @@ import pickle
 import numpy as np
 import csv
 
-PUBLIC_TEST = os.path.join(constants.BASE, 'test_preprocessed')
+PUBLIC_TEST = constants.TEST_PROCCESSED_DIR# os.path.join(constants.BASE, 'test_preprocessed_long')
 
 def evaluate_cnns(cnns, test_input, test_labels):
     test_input = cnn.reshape_input(test_input)
