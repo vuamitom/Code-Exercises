@@ -9,7 +9,7 @@ import constants
 
 BASE = constants.BASE
 TRAIN_INPUT = os.path.join(BASE, 'train')
-TRAIN_TEMP = os.path.join(BASE, 'raw_features_long')
+TRAIN_TEMP = os.path.join(BASE, 'raw_features_long2')
 TRAIN_FEATURES =constants.TRAIN_FEATURES
 MIN_VOICE_FREQ = 70
 MAX_VOICE_FREQ = 280
@@ -85,12 +85,14 @@ def extract():
             print ('process: ', fp)
             # start = datetime.datetime.now()
             features = extract_voice_feature(fp)
+            # break 
             # print ('extract takes ', (datetime.datetime.now() - start).total_seconds())
             features = fix_size(features)
             print (features.shape)
             row, col = features.shape        
             assert row == FEATURE_SIZE
             assert col == NO_FRAME
+
             # dataset[idx, :, :] = features
             temp_filename = os.path.join(TRAIN_TEMP, l, str(idx) + '.pickle')            
             try:
@@ -133,6 +135,11 @@ def extract_voice_feature(fp):
                         n_mfcc=N_MFCC)
     delta = librosa.feature.delta(mfccs)
 
+    cent = librosa.feature.spectral_centroid(y=X, sr=sample_rate,
+                         hop_length=SAMPLE_PER_FRAME)
+    chroma_cq = librosa.feature.chroma_cqt(y=X, sr=sample_rate, n_chroma=12,
+                        hop_length=SAMPLE_PER_FRAME, 
+                        fmin=MIN_VOICE_FREQ)
     # print (mfccs.shape)
     # print (spectrogram.shape)
     # print ("first frame", np.transpose(mfccs)[0])
@@ -143,7 +150,7 @@ def extract_voice_feature(fp):
     # plt.tight_layout()
     # mfccs = 
     # plt.show()
-    return np.vstack((spectrogram, mfccs, delta))
+    return np.vstack((spectrogram, mfccs, delta, cent, chroma_cq))
 
 def load_means_and_stds():
     mean_std = None
@@ -280,7 +287,7 @@ def split_train_valid_test(dtype='accent'):
     test_input, test_labels = randomize(test_input, test_labels)
     valid_input, valid_labels = randomize(valid_input, valid_labels)
 
-    output_file = 'randomized_' + dtype + '_data_long.pickle'
+    output_file = 'randomized_' + dtype + '_data_long2.pickle'
     dataset = dict(train_input=train_input,
         train_labels=train_labels,
         valid_input=valid_input,
@@ -321,9 +328,9 @@ def preprocess_test_data():
             pickle.dump(features, f, pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
-    # extract()
+    extract()
     # get_mean()
-    split_train_valid_test('combined')
+    # split_train_valid_test('combined')
     # preprocess_test_data()
     # standardize_and_save()
     # features = extract_voice_feature('/media/tamvm/DATA/AiChallenge/train/female_central/6056354cd5b14a8d99183ab9e5fc638d_01771.mp3')

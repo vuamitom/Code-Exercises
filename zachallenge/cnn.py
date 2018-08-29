@@ -185,7 +185,7 @@ def train_and_predict(m, checkpoint_filepath, train_input, train_labels, test_in
     test_labels = keras.utils.to_categorical(test_labels, n_classes)
     valid_labels = keras.utils.to_categorical(valid_labels, n_classes)
     batch_size = BATCH_SIZE
-    epochs = 15
+    epochs = 45
     if m is None:
         m = create_model(get_input_shape(), n_classes)    
         m.compile(optimizer=Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy']) 
@@ -242,14 +242,14 @@ if __name__ == '__main__':
         # train_and_predict(model, checkpoint_filepath, train_input, train_labels, test_input, test_labels, 'combined')
     else:
         # m = keras.models.load_model(os.path.join(os.path.dirname(__file__), 'cnn_combined_acc063_7epocs.h5'))
-        m = keras.models.load_model(os.path.join(os.path.dirname(__file__), 'long_model', 'cnn_3x3_3layers_001lr_256_run3.h5'))
+        m = keras.models.load_model(os.path.join(os.path.dirname(__file__), 'long_model', 'cnn_3x3_3layers_001lr_256_run5.h5'))
         print (m.summary())
         # print (m.get_layer('dropout_5'))
-        # m.optimizer = RMSprop(lr=0.0001)
+        m.optimizer = RMSprop(lr=0.0001)
         # dense_1 = m.get_layer('dense_3')
         # dense_1.kernel_regularizer=regularizers.l1(0.01)
         # dense_2 = m.get_layer('dense_4')
         # dense_2.activity_regularizer=regularizers.l2(0.01) 
         # m.lr.set_value(0.0005)
-        checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'long_model', 'cnn_3x3_3layers_001lr_256_run4.h5')
+        checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'long_model', 'cnn_3x3_3layers_001lr_256_run6.h5')
         train_and_predict(m, checkpoint_filepath, train_input, train_labels, test_input, test_labels, 'combined')
