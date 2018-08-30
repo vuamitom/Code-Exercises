@@ -41,7 +41,7 @@ def create_model(input_shape, n_classes):
     model.add(Dropout(0.25))
  
     model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
-    model.add(Conv2D(64, (3, 3), activation='relu', kernel_regularizer=regularizers.l1(0.001)))
+    model.add(Conv2D(64, (3, 3), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
 
@@ -51,14 +51,14 @@ def create_model(input_shape, n_classes):
     # model.add(Dropout(0.25))
  
     model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
-    model.add(Conv2D(64, (3, 3), activation='relu', kernel_regularizer=regularizers.l1_l2(l1=0.01, l2=0.001)))
+    model.add(Conv2D(64, (3, 3), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
  
     model.add(Flatten())
-    model.add(Dense(256, activation='relu', kernel_regularizer=regularizers.l1(0.01)))
+    model.add(Dense(512, activation='relu'))
     model.add(Dropout(0.25))
-    model.add(Dense(n_classes, activation='softmax', activity_regularizer=regularizers.l2(0.01)))
+    model.add(Dense(n_classes, activation='softmax'))
      
     return model
 
@@ -210,17 +210,18 @@ def load_model_and_predict(model_path, test_input):
 
 if __name__ == '__main__':
     train_input, train_labels, test_input, test_labels = common.get_combined_data()
-    start_over = False
+    start_over = True
     
     if start_over:
-        checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'cnn_3x3_3layers_001lr_256.h5')
+        checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'long_model2', 'cnn_3x3_3layers_001lr_512_run2.h5')
         print ('=============== begining to write to ', checkpoint_filepath)
         model = create_model(get_input_shape(), common.get_n_classes('combined'))
         model.compile(optimizer=Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'])  
-        existing = keras.models.load_model(os.path.join(os.path.dirname(__file__), 'model_3x3_3layers_001lr_256.h5'))
+        existing = keras.models.load_model(os.path.join(os.path.dirname(__file__), 'long_model2', 'cnn_3x3_3layers_001lr_512.h5'))
         temp_weights = [layer.get_weights() for layer in existing.layers]
         for i in range(len(temp_weights)):
             model.layers[i].set_weights(temp_weights[i])
+        print (model.summary())
         train_and_predict(model, checkpoint_filepath, train_input, train_labels, test_input, test_labels, 'combined')
 
         # checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'model_5x5_3layers_001lr_512.h5')

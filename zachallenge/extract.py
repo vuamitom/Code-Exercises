@@ -31,6 +31,42 @@ ACCENT_S = constants.ACCENT_S
 TEST_RATIO = 0.2
 VALID_RATIO = 0
 
+def get_mean_2():
+    # voice_list = []
+    # all_data = None
+    total_files = 0
+    for l in os.listdir(TRAIN_TEMP):
+        p = os.path.join(TRAIN_TEMP, l)
+        total_files += sum([1 for r in os.listdir(p)])
+    print ('total_files = ', total_files)
+    all_data = np.ndarray(shape=(FEATURE_SIZE, total_files * NO_FRAME ),
+                         dtype=np.float64)
+    c = 0
+    for l in os.listdir(TRAIN_TEMP):
+        p = os.path.join(TRAIN_TEMP, l) 
+        print ('process ', l)
+        for r in os.listdir(p):
+            fp = os.path.join(p, r)
+            # voice_list.append(fp)
+            print (' --- process ', fp)
+            dataset = None
+            with open(fp, 'rb') as f:
+                dataset = pickle.load(f)
+            all_data[:,c:(c+NO_FRAME)] = dataset
+            c += NO_FRAME
+
+    print ('All data count = ', all_data.shape)
+    means = np.mean(all_data, axis=1)
+    print ('Mean per coefs = ', means)
+    stds = np.std(all_data, axis=1)
+    print ('std per coefs = ', stds)
+    assert len(means) == FEATURE_SIZE
+    assert len(stds) == FEATURE_SIZE
+    stat = np.vstack((means, stds))
+    stat_file = os.path.join(BASE, constants.MEAN_STD_FILE)
+    with open(stat_file, 'wb') as f:
+        pickle.dump(stat, f, pickle.HIGHEST_PROTOCOL)
+
 def get_mean():
     # voice_list = []
     all_data = None
@@ -328,11 +364,13 @@ def preprocess_test_data():
             pickle.dump(features, f, pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
-    extract()
-    # get_mean()
-    # split_train_valid_test('combined')
+    # extract()
+    get_mean_2()    
     # preprocess_test_data()
-    # standardize_and_save()
+    print ('Standardize-------')
+    standardize_and_save()
+    print ('Split train and test -------')
+    split_train_valid_test('combined')
     # features = extract_voice_feature('/media/tamvm/DATA/AiChallenge/train/female_central/6056354cd5b14a8d99183ab9e5fc638d_01771.mp3')
     # print ('extract takes ', (datetime.datetime.now() - start).total_seconds())
     # features = fix_size(features)
