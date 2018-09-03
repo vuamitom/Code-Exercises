@@ -9,6 +9,7 @@ import numpy as np
 import csv
 
 PUBLIC_TEST = constants.TEST_PROCCESSED_DIR# os.path.join(constants.BASE, 'test_preprocessed_long')
+TEST_DIR = constants.TEST_DIR
 
 def evaluate_cnns(cnns, test_input, test_labels):
     test_input = cnn.reshape_input(test_input)
@@ -44,7 +45,7 @@ def evaluate_all(test_input, test_labels):
     # d = os.path.dirname(__file__)
     # print (d)
     # print (__file__)
-    d = 'long_model'
+    d = 'long_model3'
     cnns = [os.path.join(d, l) for l in os.listdir(d) if l.startswith('cnn_')]
     lstms = [os.path.join(d, l) for l in os.listdir(d) if l.startswith('lstm_')]
     evaluate_cnns(cnns, test_input, test_labels)    
@@ -52,9 +53,12 @@ def evaluate_all(test_input, test_labels):
 
 def run_on_test_data():
     model = keras.models.load_model('long_model/lstm_256_mfccs_delta_02dropout.h5')
-    cnn_model = keras.models.load_model('long_model/cnn_3x3_3layers_001lr_256_run6.h5')
+    cnn_model = keras.models.load_model('long_model3/cnn_3x3_3layers_001lr_256.h5')
     input_names = os.listdir(PUBLIC_TEST)
     input_names.sort(key=lambda x: int(x.split('.')[0]))
+    # print (input_names[:10])
+    # print (input_names[len(input_names) - 10:])
+    # assert False
     input_data = np.ndarray(shape=(len(input_names), constants.FEATURE_SIZE, constants.NO_FRAME), dtype=np.float64)
     for i, l in enumerate(input_names):
         p = os.path.join(PUBLIC_TEST, l)
@@ -63,19 +67,62 @@ def run_on_test_data():
             voice_data = pickle.load(f)
         input_data[i, :, :] = voice_data
 
-    input_data_lstm = lstm.reshape_input(input_data)
-    output = model.predict_classes(input_data_lstm)
+    # input_data_lstm = lstm.reshape_input(input_data)
+    # output = model.predict_classes(input_data_lstm)
     # del input_data_lstm
-    # input_data_cnn = cnn.reshape_input(input_data)
-    # output_cnn = cnn_model.predict_classes(input_data_cnn)
-    # del input_data_cnn
-    # del input_data
+    input_data_cnn = cnn.reshape_input(input_data)
+    output_cnn = cnn_model.predict_classes(input_data_cnn)
+    del input_data_cnn
+    del input_data
     # diff = sum([1 for i in range(0, len(output)) if not output[i] == output_cnn[i]])
     # print ('diff % = ', (diff / len(output) * 100.0))
-    output_csv([l.replace('.pickle', '') for l in input_names], output)
+    input_names, output_cnn = merge_segment(input_names, output_cnn)
+    test_list = os.listdir(TEST_DIR)
+    assert len(input_names) == len(test_list)
+    assert len(output_cnn) == len(test_list)
+    output_csv([l.replace('.pickle', '') for l in input_names], output_cnn)
+
+def merge_segment(input_names, output):
+    n_output, n_names = [], []
+    cur = None
+    n_classes = common.get_n_classes('combined')
+    pending = []
+    parts = []
+    for i, n in enumerate(input_names):
+        name, later = n.split('_')
+        part = later.split('.')[0]
+        # ext = later[len(part):].replace('.pickle', '')
+        # name = name + ext                
+        if not name == cur:
+            if cur is not None:
+                assert len(pending) > 0
+                # count occurrences 
+                occs = [(x, pending.count(x)) for x in range(0, n_classes)]
+                final_cls, count = max(occs, key=lambda x: x[1])
+                n_names.append(cur)
+                n_output.append(final_cls)
+                if (len(pending) > 1):
+                    print ('aggregate result for ', cur, ' to ', final_cls, ' occurrences ', count, ' all parts ', parts)
+            else:
+                assert len(pending) == 0
+            pending = [output[i]]
+            parts = [part]
+            cur = name            
+        else:
+            pending.append(output[i])
+            parts.append(part)
+    if cur is not None and len(pending) > 0:
+        occs = [(x, pending.count(x)) for x in range(0, n_classes)]
+        final_cls, count = max(occs, key=lambda x: x[1])
+        n_names.append(cur)
+        n_output.append(final_cls)
+        if (len(pending) > 1):
+            print ('aggregate result for ', cur, ' to ', final_cls, ' occurrences ', count)
+    return n_names, n_output
+
 
 def output_csv(input_names, classes):
-    with open('lstm_long_result.csv', 'w', newline='') as csvfile:
+    with open('cnn_long3_result.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=',',lineterminator='\n')
         writer.writerow(['id', 'gender', 'accent'])
         for i, n in enumerate(input_names):

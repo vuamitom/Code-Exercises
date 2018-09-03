@@ -9,7 +9,7 @@ import constants
 
 BASE = constants.BASE
 TRAIN_INPUT = os.path.join(BASE, 'train')
-TRAIN_TEMP = os.path.join(BASE, 'raw_features_long2')
+TRAIN_TEMP = constants.TRAIN_TEMP
 TRAIN_FEATURES =constants.TRAIN_FEATURES
 MIN_VOICE_FREQ = 70
 MAX_VOICE_FREQ = 280
@@ -18,7 +18,7 @@ N_MFCC = constants.N_MFCC
 N_MELS = constants.N_MELS
 FEATURE_SIZE = constants.FEATURE_SIZE
 SAMPLE_PER_FRAME = 512
-TEST_DIR = os.path.join(BASE, 'public_test')
+TEST_DIR = constants.TEST_DIR
 TEST_PREPROSSED_DIR = None
 # Gender: Female: 0, Male: 1
 # Accent: North: 0, Central: 1, South: 2
@@ -123,20 +123,39 @@ def extract():
             features = extract_voice_feature(fp)
             # break 
             # print ('extract takes ', (datetime.datetime.now() - start).total_seconds())
-            features = fix_size(features)
-            print (features.shape)
-            row, col = features.shape        
-            assert row == FEATURE_SIZE
-            assert col == NO_FRAME
-
+            features = fix_size_2(features)
+            assert len(features) >= 1
+            for chunk_id, feature_chunk in enumerate(features):
+                print (feature_chunk.shape)
+                row, col = feature_chunk.shape        
+                assert row == FEATURE_SIZE
+                assert col == NO_FRAME
             # dataset[idx, :, :] = features
-            temp_filename = os.path.join(TRAIN_TEMP, l, str(idx) + '.pickle')            
-            try:
-                with open(temp_filename, 'wb') as f:
-                    pickle.dump(features, f, pickle.HIGHEST_PROTOCOL)
-                    print ('done extract for file ', r)
-            except Exception as e:
-                print('Unable to save data to', temp_filename, ':', e)                
+                temp_filename = os.path.join(TRAIN_TEMP, l, str(idx) + 'p' + str(chunk_id) + '.pickle')            
+                try:
+                    with open(temp_filename, 'wb') as f:
+                        pickle.dump(feature_chunk, f, pickle.HIGHEST_PROTOCOL)
+                        print ('done extract for file ', r)
+                except Exception as e:
+                    print('Unable to save data to', temp_filename, ':', e)                
+
+
+def fix_size_2(features):
+    _, c = features.shape
+    if c < NO_FRAME:
+        while c < NO_FRAME:
+            add = NO_FRAME - c
+            add = add if add < c else c
+            features = np.concatenate((features, features[:, :add]), axis=1)
+            _, c = features.shape
+    elif c > NO_FRAME:
+        x = 0
+        r = []
+        while x + NO_FRAME <= c:
+            r.append(features[:, x:(x+NO_FRAME)])
+            x += NO_FRAME
+        return r
+    return [features]
 
 def fix_size(features):
     _, c = features.shape
@@ -171,11 +190,12 @@ def extract_voice_feature(fp):
                         n_mfcc=N_MFCC)
     delta = librosa.feature.delta(mfccs)
 
-    cent = librosa.feature.spectral_centroid(y=X, sr=sample_rate,
-                         hop_length=SAMPLE_PER_FRAME)
-    chroma_cq = librosa.feature.chroma_cqt(y=X, sr=sample_rate, n_chroma=12,
-                        hop_length=SAMPLE_PER_FRAME, 
-                        fmin=MIN_VOICE_FREQ)
+    # cent = librosa.feature.spectral_centroid(y=X, sr=sample_rate,
+    #                      hop_length=SAMPLE_PER_FRAME)
+    # chroma_cq = librosa.feature.chroma_cqt(y=X, sr=sample_rate, n_chroma=12,
+    #                     hop_length=SAMPLE_PER_FRAME, 
+    #                     fmin=MIN_VOICE_FREQ)
+
     # print (mfccs.shape)
     # print (spectrogram.shape)
     # print ("first frame", np.transpose(mfccs)[0])
@@ -186,7 +206,7 @@ def extract_voice_feature(fp):
     # plt.tight_layout()
     # mfccs = 
     # plt.show()
-    return np.vstack((spectrogram, mfccs, delta, cent, chroma_cq))
+    return np.vstack((spectrogram, mfccs, delta))
 
 def load_means_and_stds():
     mean_std = None
@@ -323,7 +343,7 @@ def split_train_valid_test(dtype='accent'):
     test_input, test_labels = randomize(test_input, test_labels)
     valid_input, valid_labels = randomize(valid_input, valid_labels)
 
-    output_file = 'randomized_' + dtype + '_data_long2.pickle'
+    output_file = constants.PROCESSED_OUTPUT_FILE
     dataset = dict(train_input=train_input,
         train_labels=train_labels,
         valid_input=valid_input,
@@ -349,28 +369,31 @@ def preprocess_test_data():
         # start = datetime.datetime.now()
         features = extract_voice_feature(fp)
         # print ('extract takes ', (datetime.datetime.now() - start).total_seconds())
-        features = fix_size(features)
-        print (features.shape)
-        row, col = features.shape        
-        assert row == FEATURE_SIZE
-        assert col == NO_FRAME
-        # standardize 
-        features = ((features.T - means) / stds).T
-        row, col = features.shape
-        assert row == FEATURE_SIZE
-        assert col == NO_FRAME
-        # write to file
-        with open(os.path.join(output_dir, r + '.pickle'), 'wb') as f:
-            pickle.dump(features, f, pickle.HIGHEST_PROTOCOL)
+        features = fix_size_2(features)
+        assert len(features) >= 1
+        for chunk_id, chunk in enumerate(features):
+            # print (features.shape)
+            row, col = chunk.shape        
+            assert row == FEATURE_SIZE
+            assert col == NO_FRAME
+            # standardize 
+            chunk = ((chunk.T - means) / stds).T
+            row, col = chunk.shape
+            assert row == FEATURE_SIZE
+            assert col == NO_FRAME
+            # write to file
+            with open(os.path.join(output_dir, r  + '_' + str(chunk_id) + '.pickle'), 'wb') as f:
+                pickle.dump(chunk, f, pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
     # extract()
-    get_mean_2()    
-    # preprocess_test_data()
-    print ('Standardize-------')
-    standardize_and_save()
-    print ('Split train and test -------')
+    # get_mean_2()    
+    # print ('Standardize-------')
+    # standardize_and_save()
+    # print ('Split train and test -------')
     split_train_valid_test('combined')
+
+    # preprocess_test_data()
     # features = extract_voice_feature('/media/tamvm/DATA/AiChallenge/train/female_central/6056354cd5b14a8d99183ab9e5fc638d_01771.mp3')
     # print ('extract takes ', (datetime.datetime.now() - start).total_seconds())
     # features = fix_size(features)

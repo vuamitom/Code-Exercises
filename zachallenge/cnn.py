@@ -1,7 +1,7 @@
 from keras.models import Sequential
 from keras.layers import Dense, Conv2D, MaxPooling2D, Dropout, Flatten
 from keras import backend as K
-from keras.optimizers import Adam, RMSprop
+from keras.optimizers import Adam, RMSprop, Adagrad
 import keras
 import common
 import constants
@@ -51,12 +51,12 @@ def create_model(input_shape, n_classes):
     # model.add(Dropout(0.25))
  
     model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
-    model.add(Conv2D(64, (3, 3), activation='relu'))
+    model.add(Conv2D(64, (3, 3), activation='relu', kernel_regularizer=regularizers.l1(0.001)))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
  
     model.add(Flatten())
-    model.add(Dense(512, activation='relu'))
+    model.add(Dense(256, activation='relu', activity_regularizer=regularizers.l2(0.001)))
     model.add(Dropout(0.25))
     model.add(Dense(n_classes, activation='softmax'))
      
@@ -210,19 +210,24 @@ def load_model_and_predict(model_path, test_input):
 
 if __name__ == '__main__':
     train_input, train_labels, test_input, test_labels = common.get_combined_data()
-    start_over = True
+    start_over = False
     
     if start_over:
-        checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'long_model2', 'cnn_3x3_3layers_001lr_512_run2.h5')
-        print ('=============== begining to write to ', checkpoint_filepath)
-        model = create_model(get_input_shape(), common.get_n_classes('combined'))
-        model.compile(optimizer=Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'])  
-        existing = keras.models.load_model(os.path.join(os.path.dirname(__file__), 'long_model2', 'cnn_3x3_3layers_001lr_512.h5'))
-        temp_weights = [layer.get_weights() for layer in existing.layers]
-        for i in range(len(temp_weights)):
-            model.layers[i].set_weights(temp_weights[i])
-        print (model.summary())
-        train_and_predict(model, checkpoint_filepath, train_input, train_labels, test_input, test_labels, 'combined')
+        checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'long_model2', 'cnn_3x3_3layers_001lr_256.h5')
+        # print ('=============== begining to write to ', checkpoint_filepath)
+        # model = create_model(get_input_shape(), common.get_n_classes('combined'))
+        # model.compile(optimizer=Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'])  
+        # existing = keras.models.load_model(os.path.join(os.path.dirname(__file__), 'long_model', 'cnn_3x3_3layers_001lr_256_run5.h5'))
+        # temp_weights = [layer.get_weights() for layer in existing.layers]
+        # print (existing.summary())
+        # for i in range(len(temp_weights)):
+        #     # if model.layers[i].name == 'dense_1' or model.layers[i].name == 'dropout_4':
+        #     #     model.layers[i].set_weights(temp_weights[i][0:256])
+        #     # else:
+        #     print (model.layers[i].name)
+        #     model.layers[i].set_weights(temp_weights[i])
+        # print (model.summary())
+        train_and_predict(None, checkpoint_filepath, train_input, train_labels, test_input, test_labels, 'combined')
 
         # checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'model_5x5_3layers_001lr_512.h5')
         # print ('=============== begining to write to ', checkpoint_filepath)
@@ -243,14 +248,14 @@ if __name__ == '__main__':
         # train_and_predict(model, checkpoint_filepath, train_input, train_labels, test_input, test_labels, 'combined')
     else:
         # m = keras.models.load_model(os.path.join(os.path.dirname(__file__), 'cnn_combined_acc063_7epocs.h5'))
-        m = keras.models.load_model(os.path.join(os.path.dirname(__file__), 'long_model', 'cnn_3x3_3layers_001lr_256_run5.h5'))
+        m = keras.models.load_model(os.path.join(os.path.dirname(__file__), 'long_model3', 'cnn_3x3_3layers_001lr_256_run3.h5'))
         print (m.summary())
         # print (m.get_layer('dropout_5'))
-        m.optimizer = RMSprop(lr=0.0001)
+        m.optimizer = RMSprop(lr=0.0002)
         # dense_1 = m.get_layer('dense_3')
         # dense_1.kernel_regularizer=regularizers.l1(0.01)
         # dense_2 = m.get_layer('dense_4')
         # dense_2.activity_regularizer=regularizers.l2(0.01) 
         # m.lr.set_value(0.0005)
-        checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'long_model', 'cnn_3x3_3layers_001lr_256_run6.h5')
+        checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'long_model3', 'cnn_3x3_3layers_001lr_256_run4.h5')
         train_and_predict(m, checkpoint_filepath, train_input, train_labels, test_input, test_labels, 'combined')
