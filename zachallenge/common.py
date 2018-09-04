@@ -27,6 +27,7 @@ def get_accent_data():
     return get_data('randomized_accent_data_long.pickle')
 
 def get_combined_data():
+    print ('get data from ', constants.EXTRACT_FEATURE_FILE)
     return get_data(constants.EXTRACT_FEATURE_FILE)
 
 def get_n_classes(dtype='accent'):

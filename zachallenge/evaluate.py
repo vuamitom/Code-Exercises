@@ -45,7 +45,7 @@ def evaluate_all(test_input, test_labels):
     # d = os.path.dirname(__file__)
     # print (d)
     # print (__file__)
-    d = 'long_model3'
+    d = 'long_model4'
     cnns = [os.path.join(d, l) for l in os.listdir(d) if l.startswith('cnn_')]
     lstms = [os.path.join(d, l) for l in os.listdir(d) if l.startswith('lstm_')]
     evaluate_cnns(cnns, test_input, test_labels)    
@@ -53,7 +53,7 @@ def evaluate_all(test_input, test_labels):
 
 def run_on_test_data():
     model = keras.models.load_model('long_model/lstm_256_mfccs_delta_02dropout.h5')
-    cnn_model = keras.models.load_model('long_model3/cnn_3x3_3layers_001lr_256.h5')
+    cnn_model = keras.models.load_model('long_model4/cnn_3x3_3layers_001lr_512.h5')
     input_names = os.listdir(PUBLIC_TEST)
     input_names.sort(key=lambda x: int(x.split('.')[0]))
     # print (input_names[:10])
@@ -76,11 +76,11 @@ def run_on_test_data():
     del input_data
     # diff = sum([1 for i in range(0, len(output)) if not output[i] == output_cnn[i]])
     # print ('diff % = ', (diff / len(output) * 100.0))
-    input_names, output_cnn = merge_segment(input_names, output_cnn)
+    # input_names, output_cnn = merge_segment(input_names, output_cnn)
     test_list = os.listdir(TEST_DIR)
     assert len(input_names) == len(test_list)
     assert len(output_cnn) == len(test_list)
-    output_csv([l.replace('.pickle', '') for l in input_names], output_cnn)
+    output_csv([l.replace('.pickle', '') for l in input_names], output_cnn, 'long_model4_cnn_3x3_3layers_001lr_512')
 
 def merge_segment(input_names, output):
     n_output, n_names = [], []
@@ -109,6 +109,7 @@ def merge_segment(input_names, output):
             parts = [part]
             cur = name            
         else:
+            # pass
             pending.append(output[i])
             parts.append(part)
     if cur is not None and len(pending) > 0:
@@ -121,8 +122,8 @@ def merge_segment(input_names, output):
     return n_names, n_output
 
 
-def output_csv(input_names, classes):
-    with open('cnn_long3_result.csv', 'w', newline='') as csvfile:
+def output_csv(input_names, classes, model_name):
+    with open(model_name + '_result.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=',',lineterminator='\n')
         writer.writerow(['id', 'gender', 'accent'])
         for i, n in enumerate(input_names):

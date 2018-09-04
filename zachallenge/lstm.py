@@ -36,10 +36,10 @@ def create_model_2(n_classes, batch_size, stateful):
 def reshape_input(train_input):
     # to be (samples, time frame, features)
     shape = train_input.shape
-    new_input = np.ndarray(shape=(shape[0], shape[2], 26),
+    new_input = np.ndarray(shape=(shape[0], shape[2], shape[1]),
                          dtype=np.float64)
     for r in range(0, shape[0]):
-        new_input[r,:,:] = train_input[r][26:,:].T 
+        new_input[r,:,:] = train_input[r].T 
     return new_input
 
 def reshape_input_var_length(train_input):
@@ -60,7 +60,7 @@ def train_and_predict(train_input, train_labels, test_input, test_labels, checkp
     test_labels = keras.utils.to_categorical(test_labels, n_classes)
     valid_labels = keras.utils.to_categorical(valid_labels, n_classes)
 
-    batch_size = 16
+    batch_size = 32
     stateful = False
     if stateful:
         train_size = int(batch_size * int(train_labels.shape[0] / batch_size))
@@ -73,7 +73,7 @@ def train_and_predict(train_input, train_labels, test_input, test_labels, checkp
     
     m = model
     if m is None:
-        m = create_model_2(n_classes, batch_size, stateful)
+        m = create_model(n_classes, batch_size, stateful)
         m.compile(loss='categorical_crossentropy',
                   optimizer=Adam(),
                   metrics=['accuracy'])
@@ -96,14 +96,14 @@ if __name__ == '__main__':
     train_input = reshape_input(train_input)
     test_input = reshape_input(test_input)
     
-    checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'long_model', 'lstm_256_mfccs_delta_02dropout.h5')
-    start_over = False
+    checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'long_model4', 'lstm_256_mfccs_delta_02dropout.h5')
+    start_over = True
     if start_over:
         train_and_predict(train_input, train_labels, test_input, test_labels, checkpoint_filepath, None)
     else:
         print ('retrain existing model ', checkpoint_filepath)
         model = keras.models.load_model(checkpoint_filepath)
-        model.optimizer = Adam(lr=0.0001)#.lr.set_value(0.0005)
+        model.optimizer = Adam(lr=0.001)#.lr.set_value(0.0005)
         # model.compile(loss='categorical_crossentropy',
         #           optimizer=Adam(lr=0.0005),
         #           metrics=['accuracy'])

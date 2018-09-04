@@ -123,7 +123,7 @@ def extract():
             features = extract_voice_feature(fp)
             # break 
             # print ('extract takes ', (datetime.datetime.now() - start).total_seconds())
-            features = fix_size_2(features)
+            features = [fix_size(features)]
             assert len(features) >= 1
             for chunk_id, feature_chunk in enumerate(features):
                 print (feature_chunk.shape)
@@ -190,11 +190,11 @@ def extract_voice_feature(fp):
                         n_mfcc=N_MFCC)
     delta = librosa.feature.delta(mfccs)
 
-    # cent = librosa.feature.spectral_centroid(y=X, sr=sample_rate,
-    #                      hop_length=SAMPLE_PER_FRAME)
-    # chroma_cq = librosa.feature.chroma_cqt(y=X, sr=sample_rate, n_chroma=12,
-    #                     hop_length=SAMPLE_PER_FRAME, 
-    #                     fmin=MIN_VOICE_FREQ)
+    cent = librosa.feature.spectral_centroid(y=X, sr=sample_rate,
+                         hop_length=SAMPLE_PER_FRAME)
+    chroma_cq = librosa.feature.chroma_cqt(y=X, sr=sample_rate, n_chroma=12,
+                        hop_length=SAMPLE_PER_FRAME, 
+                        fmin=MIN_VOICE_FREQ)
 
     # print (mfccs.shape)
     # print (spectrogram.shape)
@@ -206,7 +206,7 @@ def extract_voice_feature(fp):
     # plt.tight_layout()
     # mfccs = 
     # plt.show()
-    return np.vstack((spectrogram, mfccs, delta))
+    return np.vstack((spectrogram, mfccs, delta, chroma_cq, cent))
 
 def load_means_and_stds():
     mean_std = None
@@ -369,7 +369,7 @@ def preprocess_test_data():
         # start = datetime.datetime.now()
         features = extract_voice_feature(fp)
         # print ('extract takes ', (datetime.datetime.now() - start).total_seconds())
-        features = fix_size_2(features)
+        features = [fix_size(features)]   
         assert len(features) >= 1
         for chunk_id, chunk in enumerate(features):
             # print (features.shape)
@@ -382,7 +382,9 @@ def preprocess_test_data():
             assert row == FEATURE_SIZE
             assert col == NO_FRAME
             # write to file
-            with open(os.path.join(output_dir, r  + '_' + str(chunk_id) + '.pickle'), 'wb') as f:
+
+            pickle_name = r  + '_' + str(chunk_id) + '.pickle' if len(features) > 1 else r + '.pickle'
+            with open(os.path.join(output_dir, pickle_name), 'wb') as f:
                 pickle.dump(chunk, f, pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
@@ -390,10 +392,10 @@ if __name__ == '__main__':
     # get_mean_2()    
     # print ('Standardize-------')
     # standardize_and_save()
-    # print ('Split train and test -------')
-    split_train_valid_test('combined')
+    # # print ('Split train and test -------')
+    # split_train_valid_test('combined')
 
-    # preprocess_test_data()
+    preprocess_test_data()
     # features = extract_voice_feature('/media/tamvm/DATA/AiChallenge/train/female_central/6056354cd5b14a8d99183ab9e5fc638d_01771.mp3')
     # print ('extract takes ', (datetime.datetime.now() - start).total_seconds())
     # features = fix_size(features)
