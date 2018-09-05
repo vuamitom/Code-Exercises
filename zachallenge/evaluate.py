@@ -5,6 +5,9 @@ import lstm
 import cnn
 import constants
 import pickle
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
 import numpy as np
 import csv
 
@@ -48,12 +51,12 @@ def evaluate_all(test_input, test_labels):
     d = 'long_model4'
     cnns = [os.path.join(d, l) for l in os.listdir(d) if l.startswith('cnn_')]
     lstms = [os.path.join(d, l) for l in os.listdir(d) if l.startswith('lstm_')]
-    evaluate_cnns(cnns, test_input, test_labels)    
-    # evaluate_lstm(lstms, test_input, test_labels)
+    # evaluate_cnns(cnns, test_input, test_labels)    
+    evaluate_lstm(lstms, test_input, test_labels)
 
-def run_on_test_data():
-    model = keras.models.load_model('long_model/lstm_256_mfccs_delta_02dropout.h5')
-    cnn_model = keras.models.load_model('long_model4/cnn_3x3_3layers_001lr_512.h5')
+
+def run_on_gender_accent_test():
+    
     input_names = os.listdir(PUBLIC_TEST)
     input_names.sort(key=lambda x: int(x.split('.')[0]))
     # print (input_names[:10])
@@ -71,16 +74,47 @@ def run_on_test_data():
     # output = model.predict_classes(input_data_lstm)
     # del input_data_lstm
     input_data_cnn = cnn.reshape_input(input_data)
-    output_cnn = cnn_model.predict_classes(input_data_cnn)
-    del input_data_cnn
-    del input_data
-    # diff = sum([1 for i in range(0, len(output)) if not output[i] == output_cnn[i]])
-    # print ('diff % = ', (diff / len(output) * 100.0))
-    # input_names, output_cnn = merge_segment(input_names, output_cnn)
+
+    gender_model = keras.models.load_model('long_model_gender/cnn_3x3_3layers_001lr_512.h5')
+    accent_model = keras.models.load_model('long_model_accent/cnn_3x3_3layers_001lr_512.h5')
+
+    output_gender = gender_model.predict_classes(input_data_cnn)
+    output_accent = accent_model.predict_classes(input_data_cnn)
     test_list = os.listdir(TEST_DIR)
     assert len(input_names) == len(test_list)
     assert len(output_cnn) == len(test_list)
-    output_csv([l.replace('.pickle', '') for l in input_names], output_cnn, 'long_model4_cnn_3x3_3layers_001lr_512')
+    output_csv([l.replace('.pickle', '') for l in input_names], output_cnn, 'long_model_separate_cnn_3x3_3layers_001lr_512')    
+
+def run_on_test_data():
+    model = keras.models.load_model('/model/lstm_final.h5')
+    # cnn_model = keras.models.load_model('long_model4/cnn_3x3_3layers_001lr_512.h5')
+    input_names = os.listdir(PUBLIC_TEST)
+    input_names.sort(key=lambda x: int(x.split('.')[0]))
+    # print (input_names[:10])
+    # print (input_names[len(input_names) - 10:])
+    # assert False
+    input_data = np.ndarray(shape=(len(input_names), constants.FEATURE_SIZE, constants.NO_FRAME), dtype=np.float64)
+    for i, l in enumerate(input_names):
+        p = os.path.join(PUBLIC_TEST, l)
+        voice_data = None
+        with open(p, 'rb') as f:
+            voice_data = pickle.load(f)
+        input_data[i, :, :] = voice_data
+
+    input_data_lstm = lstm.reshape_input(input_data)
+    output = model.predict_classes(input_data_lstm)
+    # del input_data_lstm
+    # input_data_cnn = cnn.reshape_input(input_data)
+    # output_cnn = cnn_model.predict_classes(input_data_cnn)
+    # del input_data_cnn
+    # del input_data
+    # diff = sum([1 for i in range(0, len(output)) if not output[i] == output_cnn[i]])
+    # print ('diff % = ', (diff / len(output) * 100.0))
+    # input_names, output_cnn = merge_segment(input_names, output_cnn)
+    # test_list = os.listdir(TEST_DIR)
+    # assert len(input_names) == len(test_list)
+    # assert len(output) == len(test_list)
+    output_csv([l.replace('.pickle', '') for l in input_names], output, 'lstm_256_mfccs_delta_02dropout_with_pt')
 
 def merge_segment(input_names, output):
     n_output, n_names = [], []
@@ -123,7 +157,7 @@ def merge_segment(input_names, output):
 
 
 def output_csv(input_names, classes, model_name):
-    with open(model_name + '_result.csv', 'w', newline='') as csvfile:
+    with open('/result/submission.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=',',lineterminator='\n')
         writer.writerow(['id', 'gender', 'accent'])
         for i, n in enumerate(input_names):

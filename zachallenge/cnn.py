@@ -248,7 +248,7 @@ if __name__ == '__main__':
         # train_and_predict(model, checkpoint_filepath, train_input, train_labels, test_input, test_labels, 'combined')
     else:
         # m = keras.models.load_model(os.path.join(os.path.dirname(__file__), 'cnn_combined_acc063_7epocs.h5'))
-        m = keras.models.load_model(os.path.join(os.path.dirname(__file__), 'long_model2', 'cnn_3x3_3layers_001lr_512_run3.h5'))
+        m = keras.models.load_model(os.path.join(os.path.dirname(__file__), 'long_model4', 'cnn_3x3_3layers_001lr_512.h5'))
         print (m.summary())
         # print (m.get_layer('dropout_5'))
         m.optimizer = RMSprop(lr=0.0002)
@@ -259,3 +259,19 @@ if __name__ == '__main__':
         # m.lr.set_value(0.0005)
         checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'long_model4', 'cnn_3x3_3layers_001lr_512.h5')
         train_and_predict(m, checkpoint_filepath, train_input, train_labels, test_input, test_labels, 'combined')
+    # del train_input
+    # del train_labels
+    # del test_labels
+    # del test_input
+    # print ('train ---- accent')
+    # m = keras.models.load_model(os.path.join(os.path.dirname(__file__), 'long_model4', 'cnn_3x3_3layers_001lr_512.h5'))
+    #     # print (m.summary())
+    #     # print (m.get_layer('dropout_5'))
+    # m.optimizer = RMSprop(lr=0.0002)
+    # # dense_1 = m.get_layer('dense_3')
+    # # dense_1.kernel_regularizer=regularizers.l1(0.01)
+    # # dense_2 = m.get_layer('dense_4')
+    # # dense_2.activity_regularizer=regularizers.l2(0.01) 
+    # # m.lr.set_value(0.0005)
+    # checkpoint_filepath = os.path.join(os.path.dirname(__file__), 'long_model_accent', 'cnn_accent_3x3_3layers_001lr_512.h5')
+    # train_and_predict(m, checkpoint_filepath, train_input, train_labels, test_input, test_labels, 'accent')

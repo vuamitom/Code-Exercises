@@ -1,3 +1,6 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
 import os
 import librosa
 import librosa.display
@@ -344,6 +347,10 @@ def split_train_valid_test(dtype='accent'):
     valid_input, valid_labels = randomize(valid_input, valid_labels)
 
     output_file = constants.PROCESSED_OUTPUT_FILE
+    if dtype == 'accent':
+        pass
+    elif dtype == 'gender':
+        pass
     dataset = dict(train_input=train_input,
         train_labels=train_labels,
         valid_input=valid_input,
@@ -359,40 +366,39 @@ def preprocess_test_data():
         os.mkdir(output_dir)
     except FileExistsError:
         pass
-
     means, stds = load_means_and_stds()
-
     test_list = os.listdir(TEST_DIR)
     for r in test_list:            
         fp = os.path.join(TEST_DIR, r)
-        print ('pre-process: ', fp)
-        # start = datetime.datetime.now()
-        features = extract_voice_feature(fp)
-        # print ('extract takes ', (datetime.datetime.now() - start).total_seconds())
-        features = [fix_size(features)]   
-        assert len(features) >= 1
-        for chunk_id, chunk in enumerate(features):
-            # print (features.shape)
-            row, col = chunk.shape        
-            assert row == FEATURE_SIZE
-            assert col == NO_FRAME
-            # standardize 
-            chunk = ((chunk.T - means) / stds).T
-            row, col = chunk.shape
-            assert row == FEATURE_SIZE
-            assert col == NO_FRAME
-            # write to file
+        if os.path.isfile(fp):
+            print ('pre-process: ', fp)
+            # start = datetime.datetime.now()
+            features = extract_voice_feature(fp)
+            # print ('extract takes ', (datetime.datetime.now() - start).total_seconds())
+            features = [fix_size(features)]   
+            assert len(features) >= 1
+            for chunk_id, chunk in enumerate(features):
+                # print (features.shape)
+                row, col = chunk.shape        
+                assert row == FEATURE_SIZE
+                assert col == NO_FRAME
+                # standardize 
+                chunk = ((chunk.T - means) / stds).T
+                row, col = chunk.shape
+                assert row == FEATURE_SIZE
+                assert col == NO_FRAME
+                # write to file
 
-            pickle_name = r  + '_' + str(chunk_id) + '.pickle' if len(features) > 1 else r + '.pickle'
-            with open(os.path.join(output_dir, pickle_name), 'wb') as f:
-                pickle.dump(chunk, f, pickle.HIGHEST_PROTOCOL)
+                pickle_name = r  + '_' + str(chunk_id) + '.pickle' if len(features) > 1 else r + '.pickle'
+                with open(os.path.join(output_dir, pickle_name), 'wb') as f:
+                    pickle.dump(chunk, f, pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
     # extract()
     # get_mean_2()    
     # print ('Standardize-------')
     # standardize_and_save()
-    # # print ('Split train and test -------')
+    # print ('Split train and test -------')
     # split_train_valid_test('combined')
 
     preprocess_test_data()

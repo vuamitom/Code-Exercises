@@ -1,10 +1,11 @@
 import os
 import pickle
 import constants
+import numpy as np
 
 BASE = constants.BASE
 TRAIN_FEATURES = constants.TRAIN_FEATURES
-
+PUBLIC_TEST = constants.TEST_PROCCESSED_DIR
 
 def get_data(fn):
     dataset = None
@@ -24,7 +25,10 @@ def get_data(fn):
     return train_input, train_labels, test_input, test_labels
 
 def get_accent_data():
-    return get_data('randomized_accent_data_long.pickle')
+    return get_data(constants.PROCESSED_ACCENT_FILE)
+
+def get_gender_data():
+    return get_data(constants.PROCESSED_GENDER_FILE)
 
 def get_combined_data():
     print ('get data from ', constants.EXTRACT_FEATURE_FILE)
@@ -54,3 +58,48 @@ def get_validation_data(train_input, train_labels):
     assert len(valid_labels) == valid_size
     assert len(train_labels) == no_recs - valid_size
     return train_input, train_labels, valid_input, valid_labels
+
+def randomize(dataset, labels):
+  permutation = np.random.permutation(labels.shape[0])
+  shuffled_dataset = dataset[permutation,:,:]
+  shuffled_labels = labels[permutation]
+  return shuffled_dataset, shuffled_labels
+
+def get_public_test_data():
+    input_names = os.listdir(PUBLIC_TEST)
+    input_names.sort(key=lambda x: int(x.split('.')[0]))
+    # print (input_names[:10])
+    # print (input_names[len(input_names) - 10:])
+    # assert False
+    input_data = np.ndarray(shape=(len(input_names), constants.FEATURE_SIZE, constants.NO_FRAME), dtype=np.float64)
+    for i, l in enumerate(input_names):
+        p = os.path.join(PUBLIC_TEST, l)
+        voice_data = None
+        with open(p, 'rb') as f:
+            voice_data = pickle.load(f)
+        input_data[i, :, :] = voice_data
+
+    res = None
+    with open(os.path.join(os.path.dirname(__file__), 'results', 'public_test_gt.csv'), 'r') as f:
+        res = f.readlines()
+    assert len(res) == 5560
+    labels = []
+    for l in res[1:]:
+        _, gender, accent = l.split(',')
+        gender = int(gender)
+        accent = int(accent)
+        labels.append(get_label(gender, accent, 'combined'))
+    return randomize(input_data, np.array(labels))
+
+
+def get_label(gender, accent, dtype):
+    assert 0 <= gender <= 1
+    assert 0 <= accent <= 2
+    if dtype == 'accent':
+        return accent
+    elif dtype == 'gender':
+        return gender
+    elif dtype == 'combined':
+        return accent * 2 + gender
+    else:
+        assert False
