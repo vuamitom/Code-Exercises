@@ -106,8 +106,8 @@ for num_skips, skip_window in [(2, 1), (4, 2)]:
 
 batch_size = 128
 embedding_size = 128 # Dimension of the embedding vector.
-skip_window = 4 # How many words to consider left and right.
-num_skips = 8 # How many times to reuse an input to generate a label.
+skip_window = 2 # How many words to consider left and right.
+num_skips = 4 # How many times to reuse an input to generate a label.
 # We pick a random validation set to sample nearest neighbors. here we limit the
 # validation samples to the words that have a low numeric ID, which by
 # construction are also the most frequent. 
