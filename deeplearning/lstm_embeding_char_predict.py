@@ -48,6 +48,7 @@ print(valid_size, valid_text[:64])
 
 # Utility functions to map characters to vocabulary IDs and back.
 vocabulary_size = len(string.ascii_lowercase) + 1 # [a-z] + ' '
+embedding_size = vocabulary_size
 first_letter = ord(string.ascii_lowercase[0])
 
 def char2id(char):
@@ -83,9 +84,9 @@ class BatchGenerator(object):
   
   def _next_batch(self):
     """Generate a single batch from the current cursor position in the data."""
-    batch = np.zeros(shape=(self._batch_size, vocabulary_size), dtype=np.float)
+    batch = np.zeros(shape=(self._batch_size), dtype=np.int32)
     for b in range(self._batch_size):
-      batch[b, char2id(self._text[self._cursor[b]])] = 1.0
+      batch[b] = char2id(self._text[self._cursor[b]])
       self._cursor[b] = (self._cursor[b] + 1) % self._text_size
     return batch
   
@@ -102,7 +103,7 @@ class BatchGenerator(object):
 def characters(probabilities):
   """Turn a 1-hot encoding or a probability distribution over the possible
   characters back into its (most likely) character representation."""
-  return [id2char(c) for c in np.argmax(probabilities, 1)]
+  return [id2char(c) for c in probabilities]
 
 def batches2string(batches):
   """Convert a sequence of batches back into their (most likely) string
@@ -119,8 +120,6 @@ print(batches2string(train_batches.next()))
 print(batches2string(train_batches.next()))
 print(batches2string(valid_batches.next()))
 print(batches2string(valid_batches.next()))
-
-exit(0)
 
 def logprob(predictions, labels):
   """Log-probability of the true labels in a predicted batch."""
@@ -141,8 +140,8 @@ def sample_distribution(distribution):
 
 def sample(prediction):
   """Turn a (column) prediction into 1-hot encoded samples."""
-  p = np.zeros(shape=[1, vocabulary_size], dtype=np.float)
-  p[0, sample_distribution(prediction[0])] = 1.0
+  p = np.zeros(shape=[1, 1], dtype=np.float)
+  p[0, 0] = sample_distribution(prediction[0])
   return p
 
 def random_distribution():
@@ -157,30 +156,30 @@ num_nodes = 64
 
 graph = tf.Graph()
 with graph.as_default():
-  
+  embeddings = tf.Variable(tf.random_uniform([vocabulary_size, embedding_size], -1.0, 1.0))
   # Parameters:
   # Input gate: input, previous output, and bias.
-  ix = tf.Variable(tf.truncated_normal([vocabulary_size, num_nodes], -0.1, 0.1))
+  ix = tf.Variable(tf.truncated_normal([embedding_size, num_nodes], -0.1, 0.1))
   im = tf.Variable(tf.truncated_normal([num_nodes, num_nodes], -0.1, 0.1))
   ib = tf.Variable(tf.zeros([1, num_nodes]))
   # Forget gate: input, previous output, and bias.
-  fx = tf.Variable(tf.truncated_normal([vocabulary_size, num_nodes], -0.1, 0.1))
+  fx = tf.Variable(tf.truncated_normal([embedding_size, num_nodes], -0.1, 0.1))
   fm = tf.Variable(tf.truncated_normal([num_nodes, num_nodes], -0.1, 0.1))
   fb = tf.Variable(tf.zeros([1, num_nodes]))
   # Memory cell: input, state and bias.                             
-  cx = tf.Variable(tf.truncated_normal([vocabulary_size, num_nodes], -0.1, 0.1))
+  cx = tf.Variable(tf.truncated_normal([embedding_size, num_nodes], -0.1, 0.1))
   cm = tf.Variable(tf.truncated_normal([num_nodes, num_nodes], -0.1, 0.1))
   cb = tf.Variable(tf.zeros([1, num_nodes]))
   # Output gate: input, previous output, and bias.
-  ox = tf.Variable(tf.truncated_normal([vocabulary_size, num_nodes], -0.1, 0.1))
+  ox = tf.Variable(tf.truncated_normal([embedding_size, num_nodes], -0.1, 0.1))
   om = tf.Variable(tf.truncated_normal([num_nodes, num_nodes], -0.1, 0.1))
   ob = tf.Variable(tf.zeros([1, num_nodes]))
   # Variables saving state across unrollings.
   saved_output = tf.Variable(tf.zeros([batch_size, num_nodes]), trainable=False)
   saved_state = tf.Variable(tf.zeros([batch_size, num_nodes]), trainable=False)
   # Classifier weights and biases.
-  w = tf.Variable(tf.truncated_normal([num_nodes, vocabulary_size], -0.1, 0.1))
-  b = tf.Variable(tf.zeros([vocabulary_size]))
+  w = tf.Variable(tf.truncated_normal([num_nodes, embedding_size], -0.1, 0.1))
+  b = tf.Variable(tf.zeros([embedding_size]))
   
   # Definition of the cell computation.
   def lstm_cell(i, o, state):
@@ -197,8 +196,8 @@ with graph.as_default():
   # Input data.
   train_data = list()
   for _ in range(num_unrollings + 1):
-    train_data.append(
-      tf.placeholder(tf.float32, shape=[batch_size,vocabulary_size]))
+    train_data.append(tf.nn.embedding_lookup(embeddings,
+      tf.placeholder(tf.int32, shape=[batch_size])))
   train_inputs = train_data[:num_unrollings]
   train_labels = train_data[1:]  # labels are inputs shifted by one time step.
 
@@ -233,14 +232,15 @@ with graph.as_default():
   train_prediction = tf.nn.softmax(logits)
   
   # Sampling and validation eval: batch 1, no unrolling.
-  sample_input = tf.placeholder(tf.float32, shape=[1, vocabulary_size])
+  sample_input = tf.placeholder(tf.int32, shape=[1, vocabulary_size])
+  sample_embed = tf.nn.embedding_lookup(embeddings, sample_input)
   saved_sample_output = tf.Variable(tf.zeros([1, num_nodes]))
   saved_sample_state = tf.Variable(tf.zeros([1, num_nodes]))
   reset_sample_state = tf.group(
     saved_sample_output.assign(tf.zeros([1, num_nodes])),
     saved_sample_state.assign(tf.zeros([1, num_nodes])))
   sample_output, sample_state = lstm_cell(
-    sample_input, saved_sample_output, saved_sample_state)
+    sample_embed, saved_sample_output, saved_sample_state)
   with tf.control_dependencies([saved_sample_output.assign(sample_output),
                                 saved_sample_state.assign(sample_state)]):
     sample_prediction = tf.nn.softmax(tf.nn.xw_plus_b(sample_output, w, b))
