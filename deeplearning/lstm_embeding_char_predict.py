@@ -100,10 +100,10 @@ class BatchGenerator(object):
     self._last_batch = batches[-1]
     return batches
 
-def characters(probabilities):
+def characters(idarr):
   """Turn a 1-hot encoding or a probability distribution over the possible
   characters back into its (most likely) character representation."""
-  return [id2char(c) for c in probabilities]
+  return [id2char(c) for c in idarr]
 
 def batches2string(batches):
   """Convert a sequence of batches back into their (most likely) string
@@ -140,23 +140,25 @@ def sample_distribution(distribution):
 
 def sample(prediction):
   """Turn a (column) prediction into 1-hot encoded samples."""
-  p = np.zeros(shape=[1, 1], dtype=np.float)
-  p[0, 0] = sample_distribution(prediction[0])
+  p = np.zeros(shape=[1], dtype=np.int32)
+  p[0] = sample_distribution(prediction[0])
   return p
 
 def random_distribution():
   """Generate a random column of probabilities."""
-  b = np.random.uniform(0.0, 1.0, size=[1, vocabulary_size])
+  b = np.random.uniform(0.0, 1.0, size=[1, embedding_size])
   return b/np.sum(b, 1)[:,None]
 
 
 # Simple LSTM Model.
 
 num_nodes = 64
+raw_embeddings = np.random.rand(vocabulary_size, embedding_size) * 2 - 1
 
 graph = tf.Graph()
 with graph.as_default():
-  embeddings = tf.Variable(tf.random_uniform([vocabulary_size, embedding_size], -1.0, 1.0))
+  # embeddings = tf.Variable(tf.random_uniform([vocabulary_size, embedding_size], -1.0, 1.0))
+  embeddings = tf.placeholder(tf.float32, shape=[vocabulary_size, embedding_size], name='embeddings')
   # Parameters:
   # Input gate: input, previous output, and bias.
   ix = tf.Variable(tf.truncated_normal([embedding_size, num_nodes], -0.1, 0.1))
@@ -186,6 +188,7 @@ with graph.as_default():
     """Create a LSTM cell. See e.g.: http://arxiv.org/pdf/1402.1128v1.pdf
     Note that in this formulation, we omit the various connections between the
     previous state and the gates."""
+    # print ('i shape ', i.shape)
     input_gate = tf.sigmoid(tf.matmul(i, ix) + tf.matmul(o, im) + ib)
     forget_gate = tf.sigmoid(tf.matmul(i, fx) + tf.matmul(o, fm) + fb)
     update = tf.matmul(i, cx) + tf.matmul(o, cm) + cb
@@ -196,10 +199,10 @@ with graph.as_default():
   # Input data.
   train_data = list()
   for _ in range(num_unrollings + 1):
-    train_data.append(tf.nn.embedding_lookup(embeddings,
-      tf.placeholder(tf.int32, shape=[batch_size])))
-  train_inputs = train_data[:num_unrollings]
-  train_labels = train_data[1:]  # labels are inputs shifted by one time step.
+    train_data.append(
+      tf.placeholder(tf.int32, shape=[batch_size], name='rolling' + str(_)))
+  train_inputs = [tf.nn.embedding_lookup(embeddings, d) for d in train_data[:num_unrollings]]
+  train_labels = [tf.nn.embedding_lookup(embeddings, d) for d in train_data[1:]]  # labels are inputs shifted by one time step.
 
   # Unrolled LSTM loop.
   outputs = list()
@@ -232,7 +235,7 @@ with graph.as_default():
   train_prediction = tf.nn.softmax(logits)
   
   # Sampling and validation eval: batch 1, no unrolling.
-  sample_input = tf.placeholder(tf.int32, shape=[1, vocabulary_size])
+  sample_input = tf.placeholder(tf.int32, shape=[1], name='sample_input')
   sample_embed = tf.nn.embedding_lookup(embeddings, sample_input)
   saved_sample_output = tf.Variable(tf.zeros([1, num_nodes]))
   saved_sample_state = tf.Variable(tf.zeros([1, num_nodes]))
@@ -255,6 +258,8 @@ with tf.Session(graph=graph) as session:
   for step in range(num_steps):
     batches = train_batches.next()
     feed_dict = dict()
+    # print ('raw embeddings' , raw_embeddings.shape)
+    feed_dict[embeddings] = raw_embeddings
     for i in range(num_unrollings + 1):
       feed_dict[train_data[i]] = batches[i]
     _, l, predictions, lr = session.run(
@@ -267,7 +272,9 @@ with tf.Session(graph=graph) as session:
       print(
         'Average loss at step %d: %f learning rate: %f' % (step, mean_loss, lr))
       mean_loss = 0
-      labels = np.concatenate(list(batches)[1:])
+      # print ('batches shape', len(batches))
+      labels = raw_embeddings[np.concatenate(list(batches)[1:])]
+      # print ('predictions shape ', predictions.shape, ' label shape ', labels.shape)
       print('Minibatch perplexity: %.2f' % float(
         np.exp(logprob(predictions, labels))))
       if step % (summary_frequency * 10) == 0:
@@ -275,12 +282,14 @@ with tf.Session(graph=graph) as session:
         print('=' * 80)
         for _ in range(5):
           feed = sample(random_distribution())
-          sentence = characters(feed)[0]
+          # print ('feed', feed, ' feed shape ', feed.shape)
+          sentence = characters(feed)
+          print ('sentence', sentence)
           reset_sample_state.run()
           for _ in range(79):
-            prediction = sample_prediction.eval({sample_input: feed})
+            prediction = sample_prediction.eval({sample_input: feed, embeddings: raw_embeddings})
             feed = sample(prediction)
-            sentence += characters(feed)[0]
+            sentence += characters(feed)
           print(sentence)
         print('=' * 80)
       # Measure validation set perplexity.
@@ -288,7 +297,7 @@ with tf.Session(graph=graph) as session:
       valid_logprob = 0
       for _ in range(valid_size):
         b = valid_batches.next()
-        predictions = sample_prediction.eval({sample_input: b[0]})
+        predictions = sample_prediction.eval({sample_input: b[0], embeddings: raw_embeddings})
         valid_logprob = valid_logprob + logprob(predictions, b[1])
       print('Validation set perplexity: %.2f' % float(np.exp(
         valid_logprob / valid_size)))

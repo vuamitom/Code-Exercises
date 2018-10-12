@@ -120,7 +120,6 @@ print(batches2string(train_batches.next()))
 print(batches2string(valid_batches.next()))
 print(batches2string(valid_batches.next()))
 
-exit(0)
 
 def logprob(predictions, labels):
   """Log-probability of the true labels in a predicted batch."""

@@ -195,9 +195,7 @@ with graph.as_default():
     other_gate = tf.sigmoid(other_gate)
     # print ('other after sigmoid ', other_gate.shape)
     input_gate = other_gate[:,0:num_nodes]
-    
     forget_gate = other_gate[:,num_nodes: num_nodes*2]
-    
     output_gate = other_gate[:, num_nodes*2: num_nodes*3]
 
     # print (forget_gate.shape, state.shape, input_gate.shape, update.shape)
