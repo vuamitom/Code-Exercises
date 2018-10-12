@@ -153,7 +153,12 @@ def random_distribution():
 # Simple LSTM Model.
 
 num_nodes = 64
+use_onehot = True
 raw_embeddings = np.random.rand(vocabulary_size, embedding_size) * 2 - 1
+if use_onehot:
+  raw_embeddings = np.zeros(shape=[vocabulary_size, embedding_size], dtype=np.float)
+  for c in range(0, vocabulary_size):
+    raw_embeddings[c][c] = 1
 
 graph = tf.Graph()
 with graph.as_default():
@@ -283,13 +288,15 @@ with tf.Session(graph=graph) as session:
         for _ in range(5):
           feed = sample(random_distribution())
           # print ('feed', feed, ' feed shape ', feed.shape)
-          sentence = characters(feed)
+          sentence = characters(feed)[0]
           print ('sentence', sentence)
           reset_sample_state.run()
           for _ in range(79):
             prediction = sample_prediction.eval({sample_input: feed, embeddings: raw_embeddings})
             feed = sample(prediction)
-            sentence += characters(feed)
+            print ('predict ', sentence[-1], ' --> ', characters(feed)[0])
+            sentence += characters(feed)[0]
+
           print(sentence)
         print('=' * 80)
       # Measure validation set perplexity.

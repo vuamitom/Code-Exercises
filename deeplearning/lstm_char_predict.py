@@ -278,7 +278,9 @@ with tf.Session(graph=graph) as session:
           reset_sample_state.run()
           for _ in range(79):
             prediction = sample_prediction.eval({sample_input: feed})
-            feed = sample(prediction)
+            # print ('prediction ', prediction)
+            feed = sample(prediction) 
+            print ('predict ',  sentence[-1], '--->', characters(feed)[0])
             sentence += characters(feed)[0]
           print(sentence)
         print('=' * 80)
