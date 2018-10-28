@@ -193,14 +193,14 @@ public class Pattern implements Serializable {
      * The starting point of state machine for the find operation.  This allows
      * a match to start anywhere in the input.
      */
-    transient Node root;
+    public transient Node root;
 
     /**
      * The root of object tree for a match operation.  The pattern is matched
      * at the beginning.  This may include a find that uses BnM or a First
      * node.
      */
-    transient Node matchRoot;
+    public transient Node matchRoot;
 
     /**
      * Temporary storage used by parsing pattern slice.
@@ -947,7 +947,7 @@ public class Pattern implements Serializable {
     /**
      * Used to print out a subtree of the Pattern to help with debugging.
      */
-    private static void printObjectTree(Node node) {
+    public static void printObjectTree(Node node) {
         while(node != null) {
             if (node instanceof Prolog) {
                 System.out.println(node);

@@ -19,12 +19,20 @@ public class PatternTest {
         Pattern p = Pattern.compile("abc+d");
         Matcher m = p.matcher("abccccd");
         System.out.println(m.matches());
+        Pattern.printObjectTree(p.matchRoot);
         System.out.println(m.group(0));
 
         Pattern p1 = Pattern.compile("abc+d|ab+cd");
         Matcher m1 = p1.matcher("abccccd");
         System.out.println(m1.matches());
 
+        Pattern p3 = Pattern.compile("a[bc]+d");
+        Matcher m3 = p3.matcher("abccccd");
+        System.out.println(m3.matches());
+
+        Pattern p4 = Pattern.compile("a(b+|c+)d");
+        Matcher m4 = p4.matcher("abccccd");
+        System.out.println(m4.matches());
     }
 
     @Test
