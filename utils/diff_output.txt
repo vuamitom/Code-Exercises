@@ -1,0 +1,846 @@
+39c39
+< launchService() {
+---
+> testLaunchService() {
+41c41
+< 	echo " * setup run-arguments in: $PROJECT_HOME/$CONF_DIR/service-env"
+---
+> 	echo " * setup run-arguments from: $PROJECT_HOME/$CONF_DIR/service-env"
+43c43
+< 	echo " * app configuration will be loaded in: $PROJECT_HOME/$CONF_DIR/$APP_PROF.$CONF_FILES"
+---
+> 	echo " * app configuration will be loaded from: $PROJECT_HOME/$CONF_DIR/$APP_PROF.$CONF_FILES"
+51a52,55
+> }
+> 
+> launchService() {
+> 	testLaunchService
+56a61,69
+> printUsage() {
+> 	echo "Usage: `basename $0` try|start|stop|restart|status"
+> 	echo " - try: print out arguments & environment for start program, the program will not be launched"
+> 	echo " - start: launch the program"
+> 	echo " - stop: kill the program"
+> 	echo " - restart: kill the program first, then launch again the program"
+> 	echo " - status: show the program is running or stopped"
+> }
+> 
+57a71,75
+> 	try)
+> 		$0 status
+> 		testLaunchService
+> 		echo
+> 		;;
+85a104,109
+> 		if [ -e "$PID_PATH" ]; then
+> 		echo "Application is running!"
+> 		else
+> 		echo "Application stopped!"
+> 		fi
+> 		echo
+88c112
+< 		echo "Usage: `basename $0` start|stop|restart"
+---
+> 		printUsage
+11a12,17
+> # Common options need to change: APP_NAME, APP_VER
+> #
+> # $1: Service action: try/start/stop/restart/status
+> # $2: Application profile: production/development (default is production)
+> #
+> #
+13c19
+< #. /zserver/java/set_env
+---
+> #. /zserver/java/set_env.cmd
+15a22,23
+> APP_NAME=TplService
+> APP_VER=""
+19,20c27,33
+< JAR_NAME=TplService
+< APP_NAME=TplService
+---
+> 
+> #name of jar
+> if [ "x$APP_VER" != "x" ]; then
+> JAR_NAME="$APP_NAME-$APP_VER"
+> else
+> JAR_NAME="$APP_NAME"
+> fi
+26a40,45
+> if [ "x$2" != "x" ]; then
+> APP_PROF="$2"
+> else
+> APP_PROF="production"
+> fi
+> 
+41,42c60,63
+< 	echo " * setup run-arguments from: $PROJECT_HOME/$CONF_DIR/service-env"
+< 	. ./$CONF_DIR/service-env
+---
+> 	echo " * setup run-arguments from: $PROJECT_HOME/$CONF_DIR/$APP_PROF-service-env.sh"
+> 	. ./$CONF_DIR/_pre-service-env.sh
+> 	. ./$CONF_DIR/$APP_PROF-service-env.sh
+> 	. ./$CONF_DIR/_post-service-env.sh
+62c83,85
+< 	echo "Usage: `basename $0` try|start|stop|restart|status"
+---
+> 	echo "Usage: `basename $0` try|start|stop|restart|status [production|development]"
+> 	echo
+> 	echo " The first option is service action:"
+67a91,96
+> 	echo " - status: show the program is running or stopped"
+> 	echo
+> 	echo " The second option is application's profile:"
+> 	echo " - production(default): will load profile of production (commonly defined in \"conf/production-service-env.sh\")"
+> 	echo " - development: will load profile of development (commonly defined in \"conf/development-service-env.sh\")"
+> 	echo
+105a135,136
+> 		echo
+> 		ps -fp `cat $PID_PATH`
+113d143
+< 		echo
+59a60
+> 	echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Setup Info ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+65a67
+> 	echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Execution Info ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+68,70c70,71
+< 	echo Execute: $RUN_CMD
+< 	echo "Execution log: $RUNLOG_PATH"
+< 	#execution log file
+---
+> 	echo Command: $RUN_CMD
+> 	echo Log file: $RUNLOG_PATH
+72d72
+< 	echo Execute command: $RUN_CMD >"$RUNLOG_PATH"
+81a82,101
+> checkService() {
+> 	if [ -e "$PID_PATH" ]; then
+> 	_PID="`cat $PID_PATH`"
+> 	_PINF="`ps -fp $_PID | grep $_PID`"
+> 	if [ "x$_PINF" = "x" ]; then
+> 	rm -f "$PID_PATH"
+> 	fi
+> 	fi
+> }
+> 
+> printStatus() {
+> 	if [ -e "$PID_PATH" ]; then
+> 	echo "Application is running!"
+> 	echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Process Info ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+> 	ps -fp `cat $PID_PATH` | grep ""
+> 	else
+> 	echo "Application stopped!"
+> 	fi
+> }
+> 
+91d110
+< 	echo " - status: show the program is running or stopped"
+96d114
+< 	echo
+98a117,118
+> checkService
+> 
+101c121
+< 		$0 status
+---
+> 		#$0 status
+107c127
+< 		echo "Application is running!"
+---
+> 		echo "Application is already running!"
+113c133,134
+< 		echo "Started."
+---
+> 		echo
+> 		$0 status
+124a146
+> 		echo
+133,139c155
+< 		if [ -e "$PID_PATH" ]; then
+< 		echo "Application is running!"
+< 		echo
+< 		ps -fp `cat $PID_PATH`
+< 		else
+< 		echo "Application stopped!"
+< 		fi
+---
+> 		printStatus
+143a160
+> 		echo
+23a24
+> #JAR_NAME= #define if JAR_NAME is a customized name which is not based on APP_NAME & APP_VER
+27a29,31
+> ################################################################################
+> #do work
+> #
+28a33
+> if [ "x$JAR_NAME" = "x" ]; then
+33a39
+> fi
+35,37d40
+< ################################################################################
+< #do work
+< #
+25c25,27
+< PROJECT_HOME=`pwd`
+---
+> DIR=`dirname $(readlink -f $0)`
+> cd $DIR
+> PROJECT_HOME=$DIR
+17a18,23
+> ENTRY_PATH=`readlink -f $0`
+> PROJECT_HOME=`dirname $ENTRY_PATH`
+> CMD_DIR=cmd
+> CONF_DIR=conf
+> JAR_DIR=dist
+> cd $PROJECT_HOME
+19c25
+< #. /zserver/java/set_env.cmd
+---
+> . $PROJECT_HOME/$CMD_DIR/_sys-env.sh
+20a27
+> ################################################################################
+25,29d31
+< DIR=`dirname $(readlink -f $0)`
+< cd $DIR
+< PROJECT_HOME=$DIR
+< CONF_DIR=conf
+< JAR_DIR=dist
+66,69c68,71
+< 	echo " * setup run-arguments from: $PROJECT_HOME/$CONF_DIR/$APP_PROF-service-env.sh"
+< 	. ./$CONF_DIR/_pre-service-env.sh
+< 	. ./$CONF_DIR/$APP_PROF-service-env.sh
+< 	. ./$CONF_DIR/_post-service-env.sh
+---
+> 	echo " * setup run-arguments from: $PROJECT_HOME/$CMD_DIR/$APP_PROF-service-env.sh"
+> 	. $PROJECT_HOME/$CMD_DIR/_pre-service-env.sh
+> 	. $PROJECT_HOME/$CMD_DIR/$APP_PROF-service-env.sh
+> 	. $PROJECT_HOME/$CMD_DIR/_post-service-env.sh
+74c76
+< 	RUN_CMD="java $JVM_ARGS -jar $PROJECT_HOME/$JAR_DIR/$JAR_NAME.jar $APP_ARGS"
+---
+> 	RUN_CMD="${JAVA:-java} $JVM_ARGS -jar $PROJECT_HOME/$JAR_DIR/$JAR_NAME.jar $APP_ARGS"
+108c110
+< 	echo "Usage: `basename $0` try|start|stop|restart|status [production|development]"
+---
+> 	echo "Usage: `basename $ENTRY_PATH` try|start|stop|restart|status|sysinfo [production|development]"
+115a118
+> 	echo " - sysinfo: print out the system info"
+118,119c121,122
+< 	echo " - production(default): will load profile of production (commonly defined in \"conf/production-service-env.sh\")"
+< 	echo " - development: will load profile of development (commonly defined in \"conf/development-service-env.sh\")"
+---
+> 	echo " - production(default): will load profile of production (commonly defined in \"$CMD_DIR/production-service-env.sh\")"
+> 	echo " - development: will load profile of development (commonly defined in \"$CMD_DIR/development-service-env.sh\")"
+126c129
+< 		#$0 status
+---
+> 		#$ENTRY_PATH status $APP_PROF
+139c142
+< 		$0 status
+---
+> 		$ENTRY_PATH status $APP_PROF
+154c157
+< 		$0 stop
+---
+> 		$ENTRY_PATH stop $APP_PROF
+157c160
+< 		$0 start
+---
+> 		$ENTRY_PATH start $APP_PROF
+160a164,167
+> 		echo
+> 		;;
+> 	sysinfo)
+> 		printSysInfo
+45c45
+< TMP_DIR="/tmp/$APP_NAME"
+---
+> TMP_DIR="/zserver/.tmp/$APP_NAME"
+77,78c77,78
+< 	echo Command: $RUN_CMD
+< 	echo Log file: $RUNLOG_PATH
+---
+> 	echo Run command: $RUN_CMD
+> 	echo Console log: $RUNLOG_PATH
+diff /home/tamvm/Downloads/20181019scriptsHistory/1591.TplService/TplService/cmd/_pre-service-env.sh /home/tamvm/Downloads/20181019scriptsHistory/1865.TplService/TplService/cmd/_pre-service-env.sh
+3,4c3,4
+< JZCOMMONX_VERSION=1.2.0.7
+< ZICACHEX_VERSION=1.2.0.3
+---
+> JZCOMMONX_VERSION=LATEST
+> ZICACHEX_VERSION=LATEST
+45c45,46
+< TMP_DIR="/zserver/.tmp/$APP_NAME"
+---
+> TMP_DIR="/zserver/tmp/$APP_NAME"
+> LOG_DIR="/data/log/$APP_NAME"
+98a100,106
+> cleanLog() {
+> 	echo "Cleaning up: $TMP_DIR ..."
+> 	rm -f $TMP_DIR/*.log
+> 	echo "Cleaning up: $LOG_DIR ..."
+> 	rm -f $LOG_DIR/*.log
+> }
+> 
+110c118
+< 	echo "Usage: `basename $ENTRY_PATH` try|start|stop|restart|status|sysinfo [production|development]"
+---
+> 	echo "Usage: `basename $ENTRY_PATH` try|start|stop|restart|status|sysinfo|cll [production|development]"
+118a127
+> 	echo " - cll: clean log files of the program"
+167a177,180
+> 		echo
+> 		;;
+> 	cll)
+> 		cleanLog
+104a105
+> 	rm -f $LOG_DIR/*.log.*
+diff /home/tamvm/Downloads/20181019scriptsHistory/1995.TplService/TplService/cmd/development-service-env.sh /home/tamvm/Downloads/20181019scriptsHistory/2450.TplService/TplService/cmd/development-service-env.sh
+18a19
+> #auto the heap max size ($MAX_HEAP_SIZE) or leave it's empty  or custom the heap max size
+19a21
+> #auto the heap min size ($JVM_XMX) or leave it's empty  or custom the heap min size
+20a23,25
+> #auto the heap new size ($HEAP_NEWSIZE) or leave it's empty  or custom the heap new size
+> JVM_XMN=
+> #jmx monitoring: $SYS_IP_ADDR 64999
+22a28
+> #remote debug: 63999
+23a30,31
+> #suspend value: 'y' or 'n'
+> JVM_JDWP_SUSPEND=n
+diff /home/tamvm/Downloads/20181019scriptsHistory/1995.TplService/TplService/cmd/_post-service-env.sh /home/tamvm/Downloads/20181019scriptsHistory/2450.TplService/TplService/cmd/_post-service-env.sh
+20c20,21
+< JVM_JDWP_ARGS="-Xdebug -Xrunjdwp:transport=dt_socket,address=$JVM_JDWP_PORT,server=y,suspend=n"
+---
+> #JVM_JDWP_ARGS="-Xdebug -Xrunjdwp:transport=dt_socket,address=$JVM_JDWP_PORT,server=y,suspend=$JVM_JDWP_SUSPEND" # before java 5.0
+> JVM_JDWP_ARGS="-agentlib:jdwp=transport=dt_socket,address=$JVM_JDWP_PORT,server=y,suspend=$JVM_JDWP_SUSPEND" # from java 5.0 on
+diff /home/tamvm/Downloads/20181019scriptsHistory/1995.TplService/TplService/cmd/production-service-env.sh /home/tamvm/Downloads/20181019scriptsHistory/2450.TplService/TplService/cmd/production-service-env.sh
+25c25
+< #jmx monitoring
+---
+> #jmx monitoring: $SYS_IP_ADDR 64999
+28c28
+< #remote debug
+---
+> #remote debug: 63999
+29a30,31
+> #suspend value: 'y' or 'n'
+> JVM_JDWP_SUSPEND=n
+diff /home/tamvm/Downloads/20181019scriptsHistory/1995.TplService/TplService/cmd/_sys-env.sh /home/tamvm/Downloads/20181019scriptsHistory/2450.TplService/TplService/cmd/_sys-env.sh
+126a127,131
+> grabMyIpAddress() {
+>     SYS_IP_ADDR=`ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | head -1`
+> }
+> grabMyIpAddress
+> 
+diff /home/tamvm/Downloads/20181019scriptsHistory/2450.TplService/TplService/cmd/production-service-env.sh /home/tamvm/Downloads/20181019scriptsHistory/2782.TplService/TplService/cmd/production-service-env.sh
+20c20
+< JVM_XMX=2048M
+---
+> JVM_XMX=2G
+22c22
+< JVM_XMS=$JVM_XMX
+---
+> JVM_XMS=1G #$JVM_XMX
+24c24
+< JVM_XMN=$HEAP_NEWSIZE
+---
+> JVM_XMN=512M #$HEAP_NEWSIZE
+diff /home/tamvm/Downloads/20181019scriptsHistory/2782.TplService/TplService/cmd/_post-service-env.sh /home/tamvm/Downloads/20181019scriptsHistory/2899.TplService/TplService/cmd/_post-service-env.sh
+47a48,55
+> if [ "x$KCDBX_VERSION" != "x" ]; then
+> JVM_ARGS="$JVM_ARGS -Dkcdbx.version=$KCDBX_VERSION"
+> fi
+> 
+> if [ "x$JFFI_VERSION" != "x" ]; then
+> JVM_ARGS="$JVM_ARGS -Djffi.version=$JFFI_VERSION"
+> fi
+> 
+diff /home/tamvm/Downloads/20181019scriptsHistory/2782.TplService/TplService/cmd/_pre-service-env.sh /home/tamvm/Downloads/20181019scriptsHistory/2899.TplService/TplService/cmd/_pre-service-env.sh
+4a5,6
+> #KCDBX_VERSION=LATEST
+> #JFFI_VERSION=LATEST
+112a113
+> 	#lsof -p `cat $PID_PATH` | grep "/zserver/lib/zx"
+134a136,147
+> printSysInfo() {
+> 	echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ System Info ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+> 	echo "To change the JAVA, export JAVA_NAME before running this script $0, ex export JAVA_NAME=\"jdk1.7.0_51-x64\""
+> 	echo "Java Home $JAVA_HOME"
+> 	echo "Java: $JAVA"
+> 	echo "Jvm Vendor: $JVM_VENDOR"
+> 	echo "Jvm Arch: $JVM_ARCH"
+> 	echo "Jvm Version: $JVM_VERSION""_$JVM_PATCH_VERSION"
+> 	echo "Suggested max heap size for setting (xmx): $MAX_HEAP_SIZE"
+> 	echo "Suggested new heap size for setting (xmn) (not for G1 gc): $HEAP_NEWSIZE"
+> }
+> 
+139a153,154
+> 		printSysInfo
+> 		echo
+149a165,166
+> 		printSysInfo
+> 		echo
+diff /home/tamvm/Downloads/20181019scriptsHistory/3392.TplService/TplService/cmd/development-service-env.sh /home/tamvm/Downloads/20181019scriptsHistory/3428.TplService/TplService/cmd/development-service-env.sh
+8,16d7
+< # common attributes
+< CONF_FILES=config.ini
+< 
+< #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+< # app arguments: empty means disable or not-available
+< 
+< APP_ARGS=""
+< 
+< #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+17a9,29
+> #
+> #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+> #  BE NOTICED ABOUT GC SETTINGS  #
+> #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+> # It is recommended to set min (-Xms) and max (-Xmx) heap sizes to
+> # the same value to avoid stop-the-world GC pauses during resize, and
+> # so that we can lock the heap in memory on startup to prevent any
+> # of it from being swapped out. Ex "-Xmx4G -Xms4G"
+> #
+> # Young generation size: The main trade-off for the young generation is that the larger it
+> # is, the longer GC pause times will be. The shorter it is, the more
+> # expensive GC will be (usually).
+> #
+> # It is not recommended to set the young generation size if using the
+> # G1 GC, since that will override the target pause-time goal.
+> # More info: http://www.oracle.com/technetwork/articles/java/g1gc-1984535.html
+> #
+> # The example below assumes a modern 8-core+ machine for decent
+> # times. If in doubt, and if you do not particularly want to tweak, go
+> # 100 MB per physical CPU core. Ex "-Xmn800M"
+> 
+25c37
+< #jmx monitoring: $SYS_IP_ADDR 64999
+---
+> #jmx monitoring: $SYS_IP_ADDR 64999 (leave it's empty to disable)
+28c40
+< #remote debug: 63999
+---
+> #remote debug: 63999 (leave it's empty to disable)
+34a47,54
+> 
+> #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+> # app arguments: empty means disable or not-available
+> APP_ARGS=""
+> 
+> #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+> # common attributes
+> CONF_FILES=config.ini
+diff /home/tamvm/Downloads/20181019scriptsHistory/3392.TplService/TplService/cmd/_post-service-env.sh /home/tamvm/Downloads/20181019scriptsHistory/3428.TplService/TplService/cmd/_post-service-env.sh
+24c24
+< # GC tuning
+---
+> # GC tuning (CMS)
+28,29c28,29
+< 	-XX:SurvivorRatio=8 \
+< 	-XX:MaxTenuringThreshold=1 \
+---
+> 	-XX:SurvivorRatio=3 \
+> 	-XX:MaxTenuringThreshold=10 \
+32c32,34
+< 	-XX:+UseTLAB"
+---
+> 	-XX:CMSWaitDuration=10000 \
+> 	-XX:+CMSPermGenSweepingEnabled \
+> 	-XX:+CMSClassUnloadingEnabled"
+36c38,47
+< 	JVM_GCTUNE_ARGS="$JVM_GCTUNE_ARGS -XX:+UseCondCardMark"
+---
+> 	#only for CMS
+> 	JVM_GCTUNE_ARGS="$JVM_GCTUNE_ARGS \
+> 	-XX:+UseCondCardMark"
+> fi
+> 
+> # check if jvm version >= 1.8
+> if [ "$JVM_VERSION" \> "1.8" ] ; then
+> 	JVM_GCTUNE_ARGS="$JVM_GCTUNE_ARGS \
+> 	-XX:+CMSParallelInitialMarkEnabled \
+> 	-XX:+CMSEdenChunksRecordAlways"
+40a52
+> 	-server
+46c58,66
+< 	-Dzicachex.version=$ZICACHEX_VERSION"
+---
+> 	-Dzicachex.version=$ZICACHEX_VERSION \
+> 	-Djava.net.preferIPv4Stack=true \
+> 	-XX:+UseThreadPriorities \
+> 	-XX:ThreadPriorityPolicy=42 \
+> 	-XX:+AlwaysPreTouch \
+> 	-XX:-UseBiasedLocking \
+> 	-XX:+UseTLAB \
+> 	-XX:+ResizeTLAB \
+> 	-XX:+PerfDisableSharedMem"
+75,81d94
+< 
+< # enable thread priorities, primarily so we can give periodic tasks
+< # a lower priority to avoid interfering with client workload
+< JVM_ARGS="$JVM_ARGS -XX:+UseThreadPriorities"
+< # allows lowering thread priority without being root.  see
+< # http://tech.stolsvik.com/2010/01/linux-java-thread-priorities-workaround.html
+< JVM_ARGS="$JVM_ARGS -XX:ThreadPriorityPolicy=42"
+diff /home/tamvm/Downloads/20181019scriptsHistory/3392.TplService/TplService/cmd/_pre-service-env.sh /home/tamvm/Downloads/20181019scriptsHistory/3428.TplService/TplService/cmd/_pre-service-env.sh
+2a3,9
+> #The native libraries will be loaded from dir /zserver/lib/zx/
+> #use "LATEST" for finding latest version, or indicate a specific version
+> # ex:
+> #  JZCOMMONX_VERSION=1.2.1.1
+> #  ZICACHEX_VERSION=1.2.0.8
+> #
+> 
+diff /home/tamvm/Downloads/20181019scriptsHistory/3392.TplService/TplService/cmd/production-service-env.sh /home/tamvm/Downloads/20181019scriptsHistory/3428.TplService/TplService/cmd/production-service-env.sh
+8,16d7
+< # common attributes
+< CONF_FILES=config.ini
+< 
+< #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+< # app arguments: empty means disable or not-available
+< 
+< APP_ARGS=""
+< 
+< #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+17a9,29
+> #
+> #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+> #  BE NOTICED ABOUT GC SETTINGS  #
+> #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+> # It is recommended to set min (-Xms) and max (-Xmx) heap sizes to
+> # the same value to avoid stop-the-world GC pauses during resize, and
+> # so that we can lock the heap in memory on startup to prevent any
+> # of it from being swapped out. Ex "-Xmx4G -Xms4G"
+> #
+> # Young generation size: The main trade-off for the young generation is that the larger it
+> # is, the longer GC pause times will be. The shorter it is, the more
+> # expensive GC will be (usually).
+> #
+> # It is not recommended to set the young generation size if using the
+> # G1 GC, since that will override the target pause-time goal.
+> # More info: http://www.oracle.com/technetwork/articles/java/g1gc-1984535.html
+> #
+> # The example below assumes a modern 8-core+ machine for decent
+> # times. If in doubt, and if you do not particularly want to tweak, go
+> # 100 MB per physical CPU core. Ex "-Xmn800M"
+> 
+22c34
+< JVM_XMS=1G #$JVM_XMX
+---
+> JVM_XMS=1G # $JVM_XMX
+24,25c36,37
+< JVM_XMN=512M #$HEAP_NEWSIZE
+< #jmx monitoring: $SYS_IP_ADDR 64999
+---
+> JVM_XMN=512M # $HEAP_NEWSIZE
+> #jmx monitoring: $SYS_IP_ADDR 64999 (leave it's empty to disable)
+28c40
+< #remote debug: 63999
+---
+> #remote debug: 63999 (leave it's empty to disable)
+34a47,54
+> 
+> #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+> # app arguments: empty means disable or not-available
+> APP_ARGS=""
+> 
+> #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+> # common attributes
+> CONF_FILES=config.ini
+diff /home/tamvm/Downloads/20181019scriptsHistory/3392.TplService/TplService/cmd/_sys-env.sh /home/tamvm/Downloads/20181019scriptsHistory/3428.TplService/TplService/cmd/_sys-env.sh
+3c3,8
+< JAVA_HOME="/zserver/java/`ls /zserver/java | grep jdk | grep x64 | tail -1`"
+---
+> #find the latest java, if need a specific version of java, pls change JAVA_NAME's value or export it before, ex 
+> #JAVA_NAME="jdk1.7.0_51-x64"
+> if [ "x$JAVA_NAME" = "x" ]; then
+> JAVA_NAME=`ls /zserver/java | grep jdk | grep x64 | tail -1`
+> fi
+> JAVA_HOME="/zserver/java/$JAVA_NAME"
+12c17
+<             system_memory_in_mb=`free -m | awk '/Mem:/ {print $2}'`
+---
+>             system_memory_in_mb=`free -m | awk '/:/ {print $2;exit}'`
+87c92
+<     jvmver=`echo "$java_ver_output" | awk -F'"' 'NR==1 {print $2}'`
+---
+>     jvmver=`echo "$java_ver_output" | grep '[openjdk|java] version' | awk -F'"' 'NR==1 {print $2}'`
+91c96,102
+<     jvm=`echo "$java_ver_output" | awk 'NR==2 {print $1}'`
+---
+>     if [ "$JVM_VERSION" \< "1.7" ] ; then
+> 	echo "Common-corelib does not play with java under 1.7, please upgrade to newer version."
+> 	echo
+> 	exit 1;
+>     fi
+> 
+>     jvm=`echo "$java_ver_output" | grep -A 1 'java version' | awk 'NR==2 {print $1}'`
+111,125d121
+< 
+< #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+< #print info out
+< printSysInfo() {
+<     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ System Info ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+<     echo java home: $JAVA_HOME
+<     echo java: $JAVA
+<     echo heap max size: $MAX_HEAP_SIZE
+<     echo heap new size: $HEAP_NEWSIZE
+<     echo jvm vendor: $JVM_VENDOR
+<     echo jvm arch: $JVM_ARCH
+<     echo jvm version: $JVM_VERSION
+<     echo jvm patch version: $JVM_PATCH_VERSION
+< }
+< #printSysInfo
+diff /home/tamvm/Downloads/20181019scriptsHistory/3428.TplService/TplService/cmd/development-service-env.sh /home/tamvm/Downloads/20181019scriptsHistory/3440.TplService/TplService/cmd/development-service-env.sh
+32c32
+< JVM_XMX=1024M
+---
+> JVM_XMX=
+38c38
+< JVM_JMX_HOST=
+---
+> JVM_JMX_HOST=$SYS_IP_ADDR
+diff /home/tamvm/Downloads/20181019scriptsHistory/3428.TplService/TplService/cmd/production-service-env.sh /home/tamvm/Downloads/20181019scriptsHistory/3440.TplService/TplService/cmd/production-service-env.sh
+34c34
+< JVM_XMS=1G # $JVM_XMX
+---
+> JVM_XMS=1G
+36c36
+< JVM_XMN=512M # $HEAP_NEWSIZE
+---
+> JVM_XMN=
+38c38
+< JVM_JMX_HOST=
+---
+> JVM_JMX_HOST=$SYS_IP_ADDR
+diff /home/tamvm/Downloads/20181019scriptsHistory/3440.TplService/TplService/cmd/development-service-env.sh /home/tamvm/Downloads/20181019scriptsHistory/3617.TplService/TplService/cmd/development-service-env.sh
+29a30,31
+> #CMS or G1
+> JVM_GC_TYPE=CMS
+diff /home/tamvm/Downloads/20181019scriptsHistory/3440.TplService/TplService/cmd/_post-service-env.sh /home/tamvm/Downloads/20181019scriptsHistory/3617.TplService/TplService/cmd/_post-service-env.sh
+24c24,49
+< # GC tuning (CMS)
+---
+> # GC tuning
+> if [ "$JVM_GC_TYPE" = "G1" ]; then
+> # G1 GC
+> JVM_GCTUNE_ARGS="-XX:+UseG1GC \
+> 	-XX:MaxGCPauseMillis=25 \
+> 	-XX:InitiatingHeapOccupancyPercent=70 \
+> 	-XX:ParallelGCThreads=8 \
+> 	-XX:ConcGCThreads=8 \
+> 	-XX:+ParallelRefProcEnabled \
+> 	-XX:-ResizePLAB \
+> 	-XX:G1RSetUpdatingPauseTimePercent=5"
+> 
+> # description
+> #	-XX:InitiatingHeapOccupancyPercent=70	#like Cassandra and Oracle docs https://docs.oracle.com/cd/E40972_01/doc.70/e40973/cnf_jvmgc.htm#autoId2
+> #	-XX:NewRatio=2 \			#or -Xmn. Do not set them or -XX:MaxGCPauseMillis does not affect
+> #	-XX:SurvivorRatio= \			#ratio of Eden/Survivor, default 8
+> #	-XX:MaxTenuringThreshold= \		#default 15. should let G1 detect rate http://java-is-the-new-c.blogspot.com/2013/07/tuning-and-benchmarking-java-7s-garbage.html
+> #	-XX:ParallelGCThreads= \		#default value depends on platform, ncore <= 8 => ncore, otherwise, ncore * 5 / 8 (Cassandra and Oracle http://www.oracle.com/technetwork/articles/java/g1gc-1984535.html#Imp), but server has many services so it's not exactly like formula
+> #	-XX:ConcGCThreads= \			#default value depends on platform, choose = -XX:ParallelGCThreads to reduce STW durations (Cassandra)
+> #	-XX:G1ReservePercent=			#default 10. it's fake ceiling in case of more space requred by evacuation (copy or move) 
+> #	-XX:G1HeapRegionSize= "			#1MB to 32MB (2^x), just set to prevent fragmentation if most used object sizes are nearly the same
+> #	-XX:+ParallelRefProcEnabled"		#multiple threads to process the increasing references during Young and mixed GC. HBase test, GC remarking time and overall GC pause time are reduced by 75% and 30%
+> #	-XX:-ResizePLAB				#Promotion Local Allocation Buffers (PLABs) are required to avoid competition of threads for shared data structures that manage free memory. Each GC thread has one PLAB for Survival space and one for Old space. We stop resizing PLABs to avoid the large communication cost among GC threads, as well as variations during each GC
+> #	-XX:G1RSetUpdatingPauseTimePercent=5	#do less remembered set (RSet) work during STW, we will do more in concurrent GC (Cassandra)
+> else
+> # CMS GC (default)
+47a73
+> fi
+diff /home/tamvm/Downloads/20181019scriptsHistory/3440.TplService/TplService/cmd/production-service-env.sh /home/tamvm/Downloads/20181019scriptsHistory/3617.TplService/TplService/cmd/production-service-env.sh
+29a30,31
+> #CMS or G1
+> JVM_GC_TYPE=CMS
+diff /home/tamvm/Downloads/20181019scriptsHistory/3617.TplService/TplService/cmd/development-service-env.sh /home/tamvm/Downloads/20181019scriptsHistory/3627.TplService/TplService/cmd/development-service-env.sh
+31a32,33
+> #turn on gc log: 'y' or 'n'
+> JVM_GC_LOG=n
+diff /home/tamvm/Downloads/20181019scriptsHistory/3617.TplService/TplService/cmd/_post-service-env.sh /home/tamvm/Downloads/20181019scriptsHistory/3627.TplService/TplService/cmd/_post-service-env.sh
+28c28
+< 	-XX:MaxGCPauseMillis=25 \
+---
+> 	-XX:MaxGCPauseMillis=500 \
+30,31c30,31
+< 	-XX:ParallelGCThreads=8 \
+< 	-XX:ConcGCThreads=8 \
+---
+> 	-XX:ParallelGCThreads=24 \
+> 	-XX:ConcGCThreads=24 \
+73a74,88
+> fi
+> 
+> if [ "$JVM_GC_LOG" = "y" ]; then
+>         JVM_GCTUNE_ARGS="$JVM_GCTUNE_ARGS \
+>         -XX:+PrintGCDetails \
+>         -XX:+PrintGCDateStamps \
+>         -XX:+PrintHeapAtGC \
+>         -XX:+PrintTenuringDistribution \
+>         -XX:+PrintGCApplicationStoppedTime \
+>         -XX:+PrintPromotionFailure \
+>         -XX:PrintFLSStatistics=1 \
+>         -Xloggc:/data/log/$APP_NAME/$APP_NAME.gc.log \
+>         -XX:+UseGCLogFileRotation \
+>         -XX:NumberOfGCLogFiles=10 \
+>         -XX:GCLogFileSize=10M"
+diff /home/tamvm/Downloads/20181019scriptsHistory/3617.TplService/TplService/cmd/production-service-env.sh /home/tamvm/Downloads/20181019scriptsHistory/3627.TplService/TplService/cmd/production-service-env.sh
+31a32,33
+> #turn on gc log: 'y' or 'n'
+> JVM_GC_LOG=n
+18,19c18,19
+< ENTRY_PATH=`readlink -f $0`
+< PROJECT_HOME=`dirname $ENTRY_PATH`
+---
+> ENTRY_PATH=`readlink -f "$0"`
+> PROJECT_HOME=`dirname "$ENTRY_PATH"`
+23c23
+< cd $PROJECT_HOME
+---
+> cd "$PROJECT_HOME"
+25c25
+< . $PROJECT_HOME/$CMD_DIR/_sys-env.sh
+---
+> . "$PROJECT_HOME"/$CMD_DIR/_sys-env.sh
+70,72c70,72
+< 	. $PROJECT_HOME/$CMD_DIR/_pre-service-env.sh
+< 	. $PROJECT_HOME/$CMD_DIR/$APP_PROF-service-env.sh
+< 	. $PROJECT_HOME/$CMD_DIR/_post-service-env.sh
+---
+> 	. "$PROJECT_HOME"/$CMD_DIR/_pre-service-env.sh
+> 	. "$PROJECT_HOME"/$CMD_DIR/$APP_PROF-service-env.sh
+> 	. "$PROJECT_HOME"/$CMD_DIR/_post-service-env.sh
+77c77
+< 	RUN_CMD="${JAVA:-java} $JVM_ARGS -jar $PROJECT_HOME/$JAR_DIR/$JAR_NAME.jar $APP_ARGS"
+---
+> 	RUN_CMD="${JAVA:-java} $JVM_ARGS -jar \"$PROJECT_HOME\"/$JAR_DIR/$JAR_NAME.jar $APP_ARGS"
+120c120
+< 	echo "Usage: `basename $ENTRY_PATH` try|start|stop|restart|status|sysinfo|cll [production|development]"
+---
+> 	echo "Usage: `basename "$ENTRY_PATH"` try|start|stop|restart|status|sysinfo|cll [production|development]"
+129a130
+> 	echo " - help: print this guide"
+152c153
+< 		#$ENTRY_PATH status $APP_PROF
+---
+> 		#"$ENTRY_PATH" status $APP_PROF
+169c170
+< 		$ENTRY_PATH status $APP_PROF
+---
+> 		"$ENTRY_PATH" status $APP_PROF
+184c185
+< 		$ENTRY_PATH stop $APP_PROF
+---
+> 		"$ENTRY_PATH" stop $APP_PROF
+186,187c187,189
+< 		sleep 5
+< 		$ENTRY_PATH start $APP_PROF
+---
+> 		##forced to stop above, so it doesn't need a long sleep
+> 		sleep 2
+> 		"$ENTRY_PATH" start $APP_PROF
+1c1
+< #!/bin/sh
+---
+> #!/bin/bash
+22a23,24
+> #DEPENDENT_JARS="$PROJECT_HOME"/dist/lib1/*:"$PROJECT_HOME"/dist/lib2/*: #java will search jar files defined here and ones defined in the class path of the main jar, still error with jetty, will fix later...
+> #MAIN_CLASS="com.vng.zing.tplservice.app.Main2"
+77,78c79,92
+< 	RUN_CMD="${JAVA:-java} $JVM_ARGS -jar \"$PROJECT_HOME\"/$JAR_DIR/$JAR_NAME.jar $APP_ARGS"
+< 	echo Run command: $RUN_CMD
+---
+> 	if [ "x$DEPENDENT_JARS" = "x" ]; then 
+> 		if [ "x$MAIN_CLASS" = "x" ]; then
+> 		RUN_CMD=(${JAVA:-java} $JVM_ARGS -jar "$PROJECT_HOME/$JAR_DIR/$JAR_NAME.jar" $APP_ARGS)
+> 		else
+> 		RUN_CMD=(${JAVA:-java} $JVM_ARGS -cp "$PROJECT_HOME/$JAR_DIR/$JAR_NAME.jar" $MAIN_CLASS $APP_ARGS)
+> 		fi
+> 	else
+> 		if [ "x$MAIN_CLASS" = "x" ]; then # get main class in main jar if not specify
+> 		MAIN_CLASS=`unzip -q -c "$PROJECT_HOME/$JAR_DIR/$JAR_NAME.jar" META-INF/MANIFEST.MF | grep "Main-Class" | awk '{print $2}'`
+> 		MAIN_CLASS="${MAIN_CLASS%?}" # remove last unprintable char
+> 		fi
+> 		RUN_CMD=(${JAVA:-java} $JVM_ARGS -cp "$PROJECT_HOME/$JAR_DIR/$JAR_NAME.jar:$DEPENDENT_JARS" $MAIN_CLASS $APP_ARGS)
+> 	fi
+> 	echo Run command: "${RUN_CMD[@]}"
+86c100
+< 	$RUN_CMD 1>>"$RUNLOG_PATH" 2>>"$RUNLOG_PATH" &
+---
+> 	"${RUN_CMD[@]}" 1>>"$RUNLOG_PATH" 2>>"$RUNLOG_PATH" &
+77a78,92
+> 	########## zinstrumentation ##########
+> 	INSTRUMENTATION_LIBS=`unzip -q -c "$PROJECT_HOME/$JAR_DIR/$JAR_NAME.jar" META-INF/MANIFEST.MF | sed "s/Class-Path: /Class-Path### /g" |  grep -v ":" | sed "s/^[ ]*//g" | sed "s/ /#/g" | tr -d "\r\n" | sed "s/Class-Path####//g" | sed "s/#/\n/g" | grep -E "javassist|zinstrumentation" | tr "\r\n" " "`
+> 	if [ "x$INSTRUMENTATION_LIBS" != "x" ]; then
+> 		JAVASSIST_LIB=`echo $INSTRUMENTATION_LIBS | sed "s/ /\n/g" | grep javassist`
+> 		if [[ $JAVASSIST_LIB == lib/javassist* ]]; then
+> 			JAVASSIST_LIB="dist/$JAVASSIST_LIB"
+> 		fi
+> 		ZINSTRUMENTATION_LIB=`echo $INSTRUMENTATION_LIBS | sed "s/ /\n/g" | grep zinstrumentation`
+> 		if [[ $ZINSTRUMENTATION_LIB == lib/zinstrumentation* ]]; then
+> 			ZINSTRUMENTATION_LIB="dist/$ZINSTRUMENTATION_LIB"
+> 		fi
+> 		XBOOT_CLASS_PATH_ARG="-Xbootclasspath/p:$JAVASSIST_LIB:$ZINSTRUMENTATION_LIB"
+> 		JAVA_AGENT_ARG="-javaagent:$ZINSTRUMENTATION_LIB"
+> 		JVM_ARGS="$JVM_ARGS $XBOOT_CLASS_PATH_ARG $JAVA_AGENT_ARG"
+> 	fi
+diff /home/tamvm/Downloads/20181019scriptsHistory/4503.TplService/TplService/cmd/_sys-env.sh /home/tamvm/Downloads/20181019scriptsHistory/4892.TplService/TplService/cmd/_sys-env.sh
+6c6
+< JAVA_NAME=`ls /zserver/java | grep jdk | grep x64 | tail -1`
+---
+> JAVA_NAME=`ls /zserver/java | grep jdk | grep x64 | grep -v "tar" | grep -v "zip" | tail -1`
+116a117,121
+> 	########## log operation ##########
+> 	if [ "x$SSH_CONNECTION" != "x" ]; then
+> 		mkdir -p $LOG_DIR
+> 		echo `date "+%Y-%m-%d %H:%M:%S"`':' `echo $SSH_CONNECTION | awk '{print "on server " $3 ", launched by " $1}'` >> $LOG_DIR/operation.log
+> 	fi
+23c23
+< #DEPENDENT_JARS="$PROJECT_HOME"/dist/lib1/*:"$PROJECT_HOME"/dist/lib2/*: #java will search jar files defined here and ones defined in the class path of the main jar, still error with jetty, will fix later...
+---
+> #DEPENDENT_JARS="$PROJECT_HOME"/"$JAR_DIR"/lib1/*:"$PROJECT_HOME"/"$JAR_DIR"/lib2/*: #java will search jar files defined here and ones defined in the class path of the main jar, still error with jetty, will fix later...
+1
+1
+1
+0
+1
+1
+0
+1
+cmd is added 
+1
+1
+1
+0
+1
+1
+0
+1
+0
+1
+0
+0
+1
+1
+0
+1
+0
+1
+0
+1
+1
+0
+1
+0
+1
+0
+0
+1
+1
+0
+1
+0
