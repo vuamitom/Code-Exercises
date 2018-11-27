@@ -30,6 +30,14 @@ plt.scatter(X, Y)
 
 ### Normal equation
 
+def whynot_equation(X, Y):
+    # this is a question of mine, derive from y = X.dot(theta). ==> theta = X.inv.dot(Y) 
+    # but it would not be possible be cause inversion requires matrix of square dimension.
+    # it will only works when no of. feature == no of samples
+    X = np.concatenate((X, np.ones(shape=(8, 1))), axis=1)
+    theta = np.linalg.inv(X.transpose()).dot(Y)
+    return theta
+
 # theta = np.linalg.inv dot dot 
 def normal_equation(X, Y):
     # allow for biases
@@ -62,9 +70,13 @@ def gradient_descent(X, Y):
     return theta
 #gradient descent
 
+# theta = whynot_equation(X, Y)
+# print('theta = ', theta)
+
 theta = normal_equation(X, Y)
 plot_polynomial(0, 10, theta[::-1], 'C3')
 
 theta = gradient_descent(X, Y)
 plot_polynomial(0, 10, theta[::-1], 'C2')
 plt.show()
+

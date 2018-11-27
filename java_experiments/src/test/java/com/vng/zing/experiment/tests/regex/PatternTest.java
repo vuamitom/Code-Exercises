@@ -112,7 +112,7 @@ public class PatternTest {
     private String[] getLongTestInput() {
         try {
             List<String> r = Files.readAllLines(Paths.get("/home/tamvm/Downloads/wikivietnam_token.txt"));
-            String[] x = new String[4];
+            String[] x = new String[300];
             for (int i = 0; i < x.length; i++) {
 
                 if (i > 0) {
@@ -184,29 +184,41 @@ public class PatternTest {
     @Test
     public void testGroupingCost() {
 
-        String[] spams = {
-                "vay",
-                "kho[aả]n vay",
-                "vay v[oố]n",
-                "vay ti[eề]n",
-                "vay (?:t[ií]n|th[eế]) ch[aấ]p",
-                "cho vay",
-                "[uư]u [dđ][aã]i",
-                "hỗ tr[oợ] v[oố]n",
-                "gi[aả]i ng[aâ]n",
-                "(?:cty|c[oô]ng ty) (?:t[aà]i ch[ií]nh|tc)",
-                "(?:vay|v[oố]n|cvay) ti[eê]u d[uù]ng",
-                "b[aả]o hi[eể]m nh[aâ]n th[oọ]",
-                "th[eế] ch[aấ]p t[aà]i s[aả]n",
-                "th[eẻ] t[ií]n d[uụ]ng",
-                "l[aã]i su[aâấ]t|ls",
-                "nv|(?:nh[aâ]n|chuy[eê]n) vi[eê]n",
-                "t[uư] v[aấ]n",
-                "ng[aâ]n h[aà]ng|nhnn",
-                "điện thoại|s?[đd]t|tel\\b|telephone|call|liên (?:lạc|hệ)|\\blh\\b|gọi|contact|nhắn tin|(?:tin|lời) nhắn|sms"
-        };
+        boolean useUnicode = false;
+        String[] spams;
+        if (useUnicode)
+            spams = new String[]{
+                    "vay",
+                    "kho[aả]n vay",
+                    "vay v[oố]n",
+                    "vay ti[eề]n",
+                    "vay (?:t[ií]n|th[eế]) ch[aấ]p",
+                    "cho vay",
+                    "[uư]u [dđ][aã]i",
+                    "hỗ tr[oợ] v[oố]n",
+                    "gi[aả]i ng[aâ]n",
+                    "(?:cty|c[oô]ng ty) (?:t[aà]i ch[ií]nh|tc)",
+                    "(?:vay|v[oố]n|cvay) ti[eê]u d[uù]ng",
+                    "b[aả]o hi[eể]m nh[aâ]n th[oọ]",
+                    "th[eế] ch[aấ]p t[aà]i s[aả]n",
+                    "th[eẻ] t[ií]n d[uụ]ng",
+                    "l[aã]i su[aâấ]t|ls",
+                    "nv|(?:nh[aâ]n|chuy[eê]n) vi[eê]n",
+                    "t[uư] v[aấ]n",
+                    "ng[aâ]n h[aà]ng|nhnn",
+                    "điện thoại|s?[đd]t|tel\\b|telephone|call|liên (?:lạc|hệ)|\\blh\\b|gọi|contact|nhắn tin|(?:tin|lời) nhắn|sms"
+            };
+        else {
+            spams = new String[] {
+                    "ab+cd",
+                    "abc+d",
+                    "xyz",
+                    "hwm"
 
-        int noIter = 1;
+            };
+        }
+
+        int noIter = 10;
 
         // generate test input
         String[] inputs = getTestInput();
@@ -247,7 +259,11 @@ public class PatternTest {
         for (int j = 0; j < noIter; j++) {
             for (String in : inputs) {
                 java.util.regex.Matcher m = mergedPattern.matcher(in);
-                m.find();
+                boolean found = m.find();
+                if (found) {
+//                    System.out.println("FOUND  " + in);
+//                    break;
+                }
             }
         }
         // compare 2 different run
@@ -262,7 +278,11 @@ public class PatternTest {
         for (int j = 0; j < noIter; j++) {
             for (String in : inputs) {
                 java.util.regex.Matcher m = mergedPattern.matcher(in);
-                m.find();
+                boolean found = m.find();
+                if (found) {
+//                    System.out.println("FOUND: " + in);
+//                    break;
+                }
             }
         }
 
@@ -282,7 +302,11 @@ public class PatternTest {
             for (String in: inputs) {
                 for (java.util.regex.Pattern p: ps) {
                     java.util.regex.Matcher m = p.matcher(in);
-                    m.find();
+                    boolean found = m.find();
+                    if (found) {
+//                        System.out.println("FOUND " + in);
+                        break;
+                    }
                 }
             }
         }
@@ -340,10 +364,11 @@ public class PatternTest {
         // ======================================================================================
         System.out.println(">>>>>>>>>>>>> dk.brics.automaton.RegExp");
         // http://www.brics.dk/automaton/
+        boolean tableize = true;
         start = new Date();
         dk.brics.automaton.RegExp regexpr = new dk.brics.automaton.RegExp(nonCaptureMerged);
         dk.brics.automaton.Automaton auto = regexpr.toAutomaton();
-        dk.brics.automaton.RunAutomaton runauto = new dk.brics.automaton.RunAutomaton(auto, true);
+        dk.brics.automaton.RunAutomaton runauto = new dk.brics.automaton.RunAutomaton(auto, tableize);
         System.out.println("compile take " + (new Date().getTime() - start.getTime()) + " ms");
         // http://jregex.sourceforge.net/
         start = new Date();
@@ -360,7 +385,7 @@ public class PatternTest {
         start = new Date();
         regexpr = new dk.brics.automaton.RegExp(captureMerged);
         auto = regexpr.toAutomaton();
-        runauto = new dk.brics.automaton.RunAutomaton(auto, true);
+        runauto = new dk.brics.automaton.RunAutomaton(auto, tableize);
         System.out.println("compile take " + (new Date().getTime() - start.getTime()) + " ms");
         start = new Date();
         for (int j = 0; j < noIter; j++) {
@@ -380,7 +405,7 @@ public class PatternTest {
         for (int i = 0; i < runautos.length; i++) {
             dk.brics.automaton.RegExp regexpr1 = new dk.brics.automaton.RegExp(spams[i]);
             dk.brics.automaton.Automaton auto1 = regexpr1.toAutomaton();
-            runautos[i] = new dk.brics.automaton.RunAutomaton(auto1, true);
+            runautos[i] = new dk.brics.automaton.RunAutomaton(auto1, tableize);
         }
         System.out.println("compile take " + (new Date().getTime() - start.getTime()) + " ms");
 
