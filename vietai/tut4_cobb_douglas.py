@@ -5,7 +5,7 @@
 
 # P(L, K) = b (L ** alpha) (K ** (1 - alpha))
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 years = [y for y in range(1899, 1923)]
 m = len(years)
@@ -27,10 +27,45 @@ def normal_equation():
     X = np.concatenate((x1, x0), axis=1)
     print ('input shape = ', X.shape)
     y = np.log(P) - np.log(K)
+    plt.scatter(x1, y)
+    plt.show()
     print ('output shape = ', y.shape)
     # y = [x1 x0].[alpha logB]
     # use gradient descent to 
     theta = np.linalg.inv(X.transpose().dot(X)).dot(X.transpose()).dot(y)
+    print('theta = ', theta)
+    theta[1] = np.exp(theta[1])
     return theta
     
-print('solve with normal_equation ', normal_equation())
+# print('solve with normal_equation ', normal_equation())
+plt.subplots()
+plt.subplot(121)
+plt.scatter(L, P)
+plt.title('L vs P')
+plt.subplot(122)
+plt.scatter(K, P)
+plt.title('K vs P')
+
+plt.show()
+
+alpha, beta = normal_equation()
+alpha = alpha[0]
+beta = beta[0]
+print('alpha = ', alpha, ' beta = ', beta)
+
+# plot estimation 
+def plot_final(alpha, beta):
+    est_p = beta * np.multiply( L ** alpha, K ** ( 1 - alpha))
+    plt.scatter(years, est_p)
+    plt.scatter(years, P)
+    plt.show()
+    plt.scatter(est_p, P)
+    plt.show()
+    diff = [((a[1] - a[0]) / a[0])* 100 for a in zip(P.reshape(m,), est_p.reshape(m,))]
+    print('diff = ', diff)
+    plt.bar(years, diff)
+    plt.show()
+    
+
+plot_final(alpha, beta)
+

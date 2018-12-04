@@ -58,6 +58,14 @@ def _grad(X, Y, theta, m, alpha):
 def _loss(X, Y, theta, m):
     return 1/(2*m) * (np.linalg.norm(X.dot(theta) - Y) ** 2)
 
+def _alternate_loss(X, Y, theta, m):
+    E = (X.dot(theta) - Y)
+    return 1/ (2*m) * (E.transpose().dot(E))
+
+def _alternate_loss_2(X, Y, theta, m):
+    # use reduce_sum
+    pass
+
 def gradient_descent(X, Y):
     alpha = 0.01
     X = np.concatenate((X, np.ones(shape=(8, 1))), axis=1)
