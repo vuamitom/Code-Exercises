@@ -19,8 +19,7 @@ class LogisticClassifier(object):
 
         mean = 0
         std = 1
-        self.w = np.random.normal(0, np.sqrt(2./np.sum(w_shape)), w_shape)
-
+        self.w = np.random.normal(0, np.sqrt(2./np.sum(w_shape)), w_shape)        
 
     def feed_forward(self, x):
         """feed_forward
@@ -38,7 +37,7 @@ class LogisticClassifier(object):
         #            = (1{y < 0} else e**-abs(y)) * ( 1 / (1 + e ** - abs(y)))
         neg_abs = np.exp(np.where(y > 0, -y, y))
         term = np.exp(np.where(y > 0, 0, y))
-        result = np.multiply(term, 1 / 1 + neg_abs)
+        result = np.multiply(term, 1 / (1 + neg_abs))
         return result
 
 
@@ -70,7 +69,7 @@ class LogisticClassifier(object):
         # [TODO 1.7]
         # Compute the gradient matrix of w, it has the same size of w
 
-        w_grad = 0
+        w_grad = np.matmul(x.transpose(), (y_hat - y)) / y.shape[0]
         return w_grad
 
 
@@ -84,7 +83,7 @@ class LogisticClassifier(object):
         # [TODO 1.8]
         # Update w using SGD
 
-        self.w = self.w
+        self.w = self.w - learning_rate * grad
 
 
     def update_weight_momentum(self, grad, learning_rate, momentum, momentum_rate):
@@ -98,8 +97,8 @@ class LogisticClassifier(object):
         """
         # [TODO 1.9]
         # Update w using SGD with momentum
-
-        self.w = self.w
+        momentum[:,:] = momentum_rate * momentum + learning_rate * grad
+        self.w = self.w - momentum
 
     
 def plot_loss(all_loss):
@@ -250,7 +249,7 @@ if __name__ == "__main__":
     num_train = train_x.shape[0]
     num_test = test_x.shape[0]  
     
-    #generate_unit_testcase(train_x.copy(), train_y.copy()) 
+    # generate_unit_testcase(train_x.copy(), train_y.copy()) 
 
     # Normalize our data: choose one of the two methods before training
     #train_x, test_x = normalize_all_pixel(train_x, test_x) 
@@ -284,8 +283,8 @@ if __name__ == "__main__":
         grad = bin_classifier.get_grad(train_x, train_y, y_hat)
         
         # Updating weight: choose either normal SGD or SGD with momentum
-        bin_classifier.update_weight(grad, learning_rate)
-        #bin_classifier.update_weight_momentum(grad, learning_rate, momentum, momentum_rate)
+        # bin_classifier.update_weight(grad, learning_rate)
+        bin_classifier.update_weight_momentum(grad, learning_rate, momentum, momentum_rate)
 
         all_loss.append(loss) 
         
@@ -296,4 +295,4 @@ if __name__ == "__main__":
             print("Epoch %d: loss is %.5f" % (e+1, loss))
     
     y_hat = bin_classifier.feed_forward(test_x)
-    test(y_hat, test_y)
+    test(np.where(y_hat > 0.5, 1, 0), test_y)

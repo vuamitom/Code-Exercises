@@ -99,7 +99,11 @@ def normalize(train_x, val_x, test_x):
     """
     # [TODO 2.1]
     # train_mean and train_std should have the shape of (1, 1)
-
+    mean = np.mean(train_x)
+    std = np.mean(np.power(train_x - mean, 2)) ** -2
+    train_x = (train_x - mean) / std
+    val_x = (val_x - mean) / std
+    test_x = (test_x - mean) / std
     return train_x, val_x, test_x
 
 
@@ -112,8 +116,8 @@ def create_one_hot(labels, num_k=10):
     """
     # [TODO 2.2]
     # Create the one-hot label matrix here based on labels
-
-    return None 
+    I = np.identity(num_k)    
+    return I[labels]
 
 
 def test(y_hat, test_y):
