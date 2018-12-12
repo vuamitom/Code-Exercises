@@ -25,7 +25,7 @@ public class BricsTest {
     public void testFind() {
         RegExp regex = new RegExp("a[a-z]+cd|abc+d");
         Automaton auto = regex.toAutomaton();
-        RunAutomaton runAuto = new RunAutomaton(auto, false);
+        RunAutomaton runAuto = new RunAutomaton(auto, true);
 
         AutomatonMatcher m = runAuto.newMatcher("i dont lik you abcd actually i dont meant abcccde");
         m.find();

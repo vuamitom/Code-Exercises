@@ -97,6 +97,7 @@ def define_cost_func_with_workedout_equation(X1, X2, L, a, b, c, n_sample):
 
 
 def define_cost_func(X1, X2, L, a, b, c, n_sample):
+    # this is suffering from overflow
     # TODO 2: define hypothesis 'h' and cost function cost 'cost'
     H = tf.sigmoid(X1 * a + X2 *b  + c)
     # pH = tf.Print(H, [H, a, b, c], ' sigmoid output and weights ')
@@ -117,6 +118,7 @@ def define_cost_func(X1, X2, L, a, b, c, n_sample):
     return tf.Print(cost, [cost], ' cost = ')
 
 def define_cost_func_with_loop(X1, X2, L, a, b, c, n_sample):
+    # this is suffering from overflow too
     H = tf.sigmoid(X1 * a + X2 *b  + c)
     i = tf.constant(0)
     ta = tf.TensorArray(dtype=tf.float32, size=n_sample)
