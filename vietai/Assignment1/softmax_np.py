@@ -27,8 +27,10 @@ class SoftmaxClassifier(LogisticClassifier):
         """
         # [TODO 2.3]
         # Compute softmax
-
-        return None
+        # ge zi_max for each row, and shift zi by zi_max, which makes max value of each row is 0, thus avoid overflow with exp(zi) 
+        z = np.exp(x - np.amax(x, axis=1).reshape((x.shape[0], 1)))
+        zs = np.sum(z, axis=1)        
+        return z / zs
 
 
     def feed_forward(self, x):
@@ -39,8 +41,8 @@ class SoftmaxClassifier(LogisticClassifier):
         """
         # [TODO 2.3]
         # Compute a feed forward pass
-
-        return None
+        r = self.softmax(np.matmul(x, self.w))
+        return r
 
 
     def compute_loss(self, y, y_hat):
@@ -53,7 +55,7 @@ class SoftmaxClassifier(LogisticClassifier):
         # [TODO 2.4]
         # Compute categorical loss
 
-        return 0
+        return np.mean(np.log(np.sum(np.multiply(y, y_hat), axis=1)))
 
 
     def get_grad(self, x, y, y_hat):
@@ -76,9 +78,10 @@ def plot_loss(train_loss, val_loss):
     plt.plot(val_loss, color='g')
 
 
-def draw_weight(classifier):
+def draw_weight(w):
     label_names = ['T-shirt', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
     plt.figure(2, figsize=(8, 6))
+    # print ('weights', w)
     plt.clf()
     w = w[0:(28*28),:].reshape(28, 28, 10)
     for i in range(10):
@@ -133,7 +136,11 @@ def test(y_hat, test_y):
 
     # [TODO 2.7]
     # Compute the confusion matrix here
-
+    test_y = np.argmax(test_y, axis=1)    
+    for i in range(0, test_y.shape[0]):
+        confusion_mat[test_y[i], :] =  confusion_mat[test_y[i]] + y_hat[i]
+    s = np.sum(confusion_mat, axis=1).reshape((10, 1))
+    confusion_mat = confusion_mat / s 
     np.set_printoptions(precision=2)
     print('Confusion matrix:')
     print(confusion_mat)
