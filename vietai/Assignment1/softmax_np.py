@@ -130,7 +130,7 @@ def should_stop(val_loss):
         n = 10        
         changes = [(b-a)/a* 100 for a, b in zip(val_loss[(l - n - 1):(l-1)], val_loss[(l - n):])]
         # print('loss changes', changes)
-        if len([c for c in changes if c < -1]) == 0:
+        if len([c for c in changes if c < -0.1]) == 0:
             return True
     return False
 
@@ -171,7 +171,7 @@ if __name__ == "__main__":
     num_val = val_x.shape[0]
     num_test = test_x.shape[0]  
 
-    generate_unit_testcase(train_x.copy(), train_y.copy()) 
+    # generate_unit_testcase(train_x.copy(), train_y.copy()) 
 
     # Convert label lists to one-hot (one-of-k) encoding
     train_y = create_one_hot(train_y)
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     num_epoch = 10000
     learning_rate = 0.01
     momentum_rate = 0.9
-    epochs_to_draw = 10
+    epochs_to_draw = 100
     all_train_loss = []
     all_val_loss = []
     plt.ion()
@@ -220,6 +220,7 @@ if __name__ == "__main__":
         # [TODO 2.6]
         # Propose your own stopping condition here
         stop = should_stop(all_val_loss)
+        # stop = False
 
         if (e % epochs_to_draw == epochs_to_draw-1) or stop:
             plot_loss(all_train_loss, all_val_loss)

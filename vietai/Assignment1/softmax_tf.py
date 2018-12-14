@@ -61,6 +61,7 @@ if __name__ == "__main__":
     # J(w)  = - mean(sum(yk * log sk))
     #       = - mean(sum(yk * (zk - log(zsum))))
     cost = 0 - tf.reduce_mean(tf.reduce_sum(tf.multiply(y, logits - tf.log(z_sum)), axis=1))
+    # cost = 0 - tf.reduce_mean(tf.reduce_sum(tf.multiply(y, tf.log(softmax)), axis=1))
 
     # Define hyper-parameters and train-related parameters
     num_epoch = 10000
