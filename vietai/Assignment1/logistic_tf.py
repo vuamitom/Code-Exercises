@@ -9,6 +9,16 @@ import tensorflow as tf
 from util import get_vehicle_data 
 from logistic_np import *
 
+def compute_loss_builtin(y, logits):
+    # gt_zero = (x > zeros)
+    # relu_logits = tf.where(gt_zero, x, zeros)
+    # neg_abs = tf.where(gt_zero, -x, x)    
+    # c = tf.reduce_mean(relu_logits - tf.multiply(x, L) + tf.log(1 + tf.exp(neg_abs)))
+    return tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
+        labels=y,
+        logits=logits))
+    
+
 if __name__ == "__main__":
     np.random.seed(2018)
     tf.set_random_seed(2018)
@@ -49,10 +59,7 @@ if __name__ == "__main__":
     zeros_like = tf.zeros_like(logits)
     pred = tf.where(tf.sigmoid(logits, name='pred') - 0.5 > zeros_like, tf.ones_like(logits), zeros_like)
     # [TODO 1.14] Write the cost function
-    cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
-        labels=y,
-        logits=logits))
-
+    cost = compute_loss_builtin(y, logits)    
     # Define hyper-parameters and train-related parameters
     num_epoch = 2000
     learning_rate = 0.001

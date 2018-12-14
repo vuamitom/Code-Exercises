@@ -28,8 +28,8 @@ class SoftmaxClassifier(LogisticClassifier):
         # [TODO 2.3]
         # Compute softmax
         # ge zi_max for each row, and shift zi by zi_max, which makes max value of each row is 0, thus avoid overflow with exp(zi) 
-        z = np.exp(x - np.amax(x, axis=1).reshape((x.shape[0], 1)))
-        zs = np.sum(z, axis=1)        
+        z = np.exp(x - np.amax(x, axis=1, keepdims=True))
+        zs = np.sum(z, axis=1, keepdims=True)        
         return z / zs
 
 
@@ -55,7 +55,7 @@ class SoftmaxClassifier(LogisticClassifier):
         # [TODO 2.4]
         # Compute categorical loss
 
-        return np.mean(np.log(np.sum(np.multiply(y, y_hat), axis=1)))
+        return 0 - np.mean(np.log(np.sum(np.multiply(y, y_hat), axis=1)))
 
 
     def get_grad(self, x, y, y_hat):
@@ -68,7 +68,7 @@ class SoftmaxClassifier(LogisticClassifier):
         # [TODO 2.5]
         # Compute gradient of the loss function with respect to w
 
-        return None    
+        return np.matmul(x.transpose(), (y_hat - y)) / x.shape[0]
 
 
 def plot_loss(train_loss, val_loss):
@@ -103,7 +103,7 @@ def normalize(train_x, val_x, test_x):
     # [TODO 2.1]
     # train_mean and train_std should have the shape of (1, 1)
     mean = np.mean(train_x)
-    std = np.mean(np.power(train_x - mean, 2)) ** -2
+    std = np.sqrt(np.mean(np.power(train_x - mean, 2)))
     train_x = (train_x - mean) / std
     val_x = (val_x - mean) / std
     test_x = (test_x - mean) / std
@@ -123,6 +123,19 @@ def create_one_hot(labels, num_k=10):
     return I[labels]
 
 
+def should_stop(val_loss):
+    # stopping if error does not improve enough
+    l = len(val_loss)
+    if l >= 1000:
+        n = 10        
+        changes = [(b-a)/a* 100 for a, b in zip(val_loss[(l - n - 1):(l-1)], val_loss[(l - n):])]
+        # print('loss changes', changes)
+        if len([c for c in changes if c < -1]) == 0:
+            return True
+    return False
+
+
+
 def test(y_hat, test_y):
     """test
     Compute the confusion matrix based on labels and predicted values 
@@ -139,7 +152,7 @@ def test(y_hat, test_y):
     test_y = np.argmax(test_y, axis=1)    
     for i in range(0, test_y.shape[0]):
         confusion_mat[test_y[i], :] =  confusion_mat[test_y[i]] + y_hat[i]
-    s = np.sum(confusion_mat, axis=1).reshape((10, 1))
+    s = np.sum(confusion_mat, axis=1, keepdims=True)
     confusion_mat = confusion_mat / s 
     np.set_printoptions(precision=2)
     print('Confusion matrix:')
@@ -206,13 +219,17 @@ if __name__ == "__main__":
 
         # [TODO 2.6]
         # Propose your own stopping condition here
+        stop = should_stop(all_val_loss)
 
-        if (e % epochs_to_draw == epochs_to_draw-1):
+        if (e % epochs_to_draw == epochs_to_draw-1) or stop:
             plot_loss(all_train_loss, all_val_loss)
             draw_weight(dec_classifier.w)
             plt.show()
-            plt.pause(0.1) 
+            plt.pause(0.1)             
             print("Epoch %d: train loss: %.5f || val loss: %.5f" % (e+1, train_loss, val_loss))
+        if stop:
+            print('val loss does not improve much. Stop early')
+            break
 
     y_hat = dec_classifier.feed_forward(test_x)
     test(y_hat, test_y)

@@ -135,9 +135,8 @@ def normalize_all_pixel(train_x, test_x):
     """
     # [TODO 1.2]
     # train_mean and train_std should have the shape of (1, image_height, image_width) 
-    size = train_size * imgw * imgh
     train_mean = np.mean(train_x)
-    train_std = np.mean(np.power(train_x - train_mean, 2)) ** -2
+    train_std = np.sqrt(np.mean(np.power(train_x - train_mean, 2)))
     # train_x = ...    
     train_x = (train_x - train_mean) / train_std
     # test_x = ...

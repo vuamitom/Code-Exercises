@@ -63,7 +63,7 @@ if __name__ == "__main__":
     cost = 0 - tf.reduce_mean(tf.reduce_sum(tf.multiply(y, logits - tf.log(z_sum)), axis=1))
 
     # Define hyper-parameters and train-related parameters
-    num_epoch = 1000
+    num_epoch = 10000
     learning_rate = 0.01    
 
     # [TODO 2.8] Create an SGD optimizer
@@ -95,13 +95,17 @@ if __name__ == "__main__":
 
 
             # [TODO 2.11] Define your own stopping condition here 
-            if (e % epochs_to_draw == epochs_to_draw-1):
+            stop = should_stop(all_val_loss)
+            if (e % epochs_to_draw == epochs_to_draw-1) or stop:
                 plot_loss(all_train_loss, all_val_loss)
                 w_  = sess.run(w)
                 draw_weight(w_)
                 plt.show()
-                plt.pause(0.1)     
+                plt.pause(0.1)                     
                 print("Epoch %d: train loss: %.5f || val loss: %.5f" % (e+1, train_loss, val_loss))
+            if stop:
+                print('val loss does not improve much. Stop early')
+                break
         
         y_hat = sess.run(pred, feed_dict={x: test_x})
         test(y_hat, test_y)
