@@ -54,6 +54,11 @@ class LogisticClassifier(object):
         # Compute loss value (a single number)
 
         loss = 0 - np.mean(np.multiply(y, np.log(y_hat)) + np.multiply(1 - y, np.log( 1 - y_hat)))
+        
+        # avoid log, as if y_hat close to zero, np.log is close to neg infinity
+        # expand the formula to become 
+        # loss = 1/m * (log (1 + e^(-abs(z))) + max (z, 0) - y*z )
+        
         return loss
 
 
