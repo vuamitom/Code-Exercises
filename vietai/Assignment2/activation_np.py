@@ -77,10 +77,11 @@ def softmax(x):
     """softmax
     TODO:
     Softmax function.
-    :param x: input
+    :param x: input. Assuming x is of dimension MxD where M is no of samples. D is no dimens
     """
-    output = None 
-    return None
+    z = np.exp(x)
+    zs = np.sum(z, axis=1, keepdims=True)        
+    return z / zs
 
 
 def softmax_minus_max(x):
@@ -89,9 +90,9 @@ def softmax_minus_max(x):
     Stable softmax function.
     :param x: input
     """
-
-    output = None 
-    return None
+    z = np.exp(x - np.amax(x, axis=1, keepdims=True))
+    zs = np.sum(z, axis=1, keepdims=True)        
+    return z / zs
 
 if __name__ == '__main__':
     x = np.array([[1, -2], [3,-4]])

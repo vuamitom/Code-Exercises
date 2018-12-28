@@ -45,17 +45,17 @@ class Layer(object):
         :param x: input
         """
         # [TODO 1.2]
-        result = None
+        result = np.matmul(x, self.w)
         
         # Compute different types of activation
         if (self.activation == 'sigmoid'):
-            result = None
+            result = sigmoid(result)
         elif (self.activation == 'relu'):
-            result = None
+            result = reLU(result)
         elif (self.activation == 'tanh'):
-            result = None
+            result = tanh(result)
         elif (self.activation == 'softmax'):
-            result = None
+            result = softmax_minus_max(result)
 
         self.output = result
         return result
@@ -67,18 +67,19 @@ class Layer(object):
         :param x: input of the layer
         :param delta_prev: delta computed from the next layer (in feedforward direction) or previous layer (in backpropagation direction)
         """
-        # [TODO 1.2]
+        # [TODO 1.2]        
+        w_grad = None
         if(self.activation == 'sigmoid'):
-            w_grad = None 
-        
+            w_grad = sigmoid_grad(self.forward(x))
         elif(self.activation == 'tanh'):
-           w_grad = None 
-
+            w_grad = tanh_grad(self.forward(x)) 
         elif(self.activation == 'relu'):
-           w_grad = None 
+            w_grad = reLU_grad(self.forward(x)) 
 
+        delta = np.multiply(delta_prev, w_grad)
+        w_grad = np.matmul(np.transpose(x), delta)        
         # [TODO 1.4] Implement L2 regularization on weights here
-        w_grad +=  0
+        w_grad +=  self.reg * self.w 
         return w_grad, delta.copy()
 
 
@@ -132,10 +133,10 @@ class NeuralNet(object):
 
         # [TODO 1.3]
         # Estimating cross entropy loss from s and y 
-        data_loss = 0
+        data_loss = 0 - np.mean(np.log(np.sum(np.multiply(y, s), axis=1)))
 
         # Estimating regularization loss from all layers
-        reg_loss = 0.0
+        reg_loss = 0.5 * self.reg * np.sum([np.sum(np.power(l.w, 2)) for l in self.layers])
         data_loss += reg_loss
 
         return data_loss
@@ -148,11 +149,11 @@ class NeuralNet(object):
         """
         
         # [TODO 1.5] Compute delta factor from the output
-        delta = 0
+        delta = all_x[-1] - y
         delta /= y.shape[0]
         
-        # [TODO 1.5] Compute gradient of the loss function with respect to w of softmax layer, use delta from the output
-        grad_last = 0
+        # [TODO 1.5] Compute gradient of the loss function with respect to w of softmax layer, use delta from the output        
+        grad_last = np.matmul(np.transpose(all_x[-2]), delta)
 
         grad_list = []
         grad_list.append(grad_last)
@@ -162,7 +163,7 @@ class NeuralNet(object):
             layer = self.layers[i]
             x = all_x[i]
             # [TODO 1.5] Compute delta_prev factor for previous layer (in backpropagation direction)
-            delta_prev = 0
+            delta_prev = np.matmul(delta, np.transpose(prev_layer.w))
 	        # Use delta_prev to compute delta factor for the next layer (in backpropagation direction)
             grad_w, delta = layer.backward(x, delta_prev)
             grad_list.append(grad_w.copy())
@@ -259,7 +260,32 @@ def minibatch_train(net, train_x, train_y, cfg):
     :param cfg: Config object
     """
     # [TODO 1.6] Implement mini-batch training
-    pass
+    train_set_x = train_x[:cfg.num_train].copy()
+    train_set_y = train_y[:cfg.num_train].copy()
+    train_set_y = create_one_hot(train_set_y, net.num_class)
+    all_loss = []
+
+    for e in range(cfg.num_epoch):
+        epoc_loss = []
+        for b in range(0, cfg.num_train, cfg.batch_size):
+            batch_x = train_set_x[b: min(b+cfg.batch_size, cfg.num_train)]
+            batch_y = train_set_y[b: min(b+cfg.batch_size, cfg.num_train)]
+            all_x = net.forward(batch_x)
+            s = all_x[-1]
+            loss = net.compute_loss(batch_y, s)
+            grads = net.backward(batch_y, all_x)
+            net.update_weight(grads, cfg.learning_rate)
+            epoc_loss.append(loss)
+        all_loss.append(np.mean(epoc_loss))
+
+        if (cfg.visualize and e % cfg.epochs_to_draw == cfg.epochs_to_draw-1):
+            s = net.forward(train_x[0::3])[-1]
+            visualize_point(train_x[0::3], train_y[0::3], s)
+            plot_loss(all_loss, 2)
+            plt.show()
+            plt.pause(0.01)
+
+        print("Epoch %d: loss is %.5f" % (e+1, loss))
     
 
 
@@ -310,7 +336,7 @@ def bat_classification():
     # Pad 1 as the third feature of train_x and test_x
     train_x = add_one(train_x) 
     test_x = add_one(test_x)
-
+    
     # Define hyper-parameters and train-related parameters
     cfg = Config(num_epoch=1000, learning_rate=0.001, num_train=train_x.shape[0])
 
@@ -319,14 +345,15 @@ def bat_classification():
     num_hidden_nodes_2 = 100
     num_hidden_nodes_3 = 100
     net = NeuralNet(num_class, cfg.reg)
+    # print('input dimens = ', train_x.shape[1])
     net.add_linear_layer((train_x.shape[1],num_hidden_nodes), 'relu')
     net.add_linear_layer((num_hidden_nodes, num_hidden_nodes_2), 'relu')
     net.add_linear_layer((num_hidden_nodes_2, num_hidden_nodes_3), 'relu')
     net.add_linear_layer((num_hidden_nodes_3, num_class), 'softmax')
     
     #Sanity check - train in small number of samples to see the overfitting problem- the loss value should decrease rapidly
-    #cfg.num_train = 500
-    #batch_train(net, train_x, train_y, cfg)
+    # cfg.num_train = 500
+    # batch_train(net, train_x, train_y, cfg)
 
     #Batch training - train all dataset
     #batch_train(net, train_x, train_y, cfg)
@@ -352,7 +379,7 @@ def mnist_classification():
     test_x = add_one(test_x)
 
     # Define hyper-parameters and train-related parameters
-    cfg = Config(num_epoch=300, learning_rate=0.001, batch_size=200, num_train=train_x.shape, visualize=False)
+    cfg = Config(num_epoch=300, learning_rate=0.001, batch_size=200, num_train=train_x.shape[0], visualize=False)
 
     # Create NN classifier
     num_hidden_nodes = 100
@@ -378,8 +405,14 @@ if __name__ == '__main__':
     your_layer = Layer((60, 100), 'sigmoid')
     unit_test_layer(your_layer)
 
+    your_layer = Layer((145, 40), 'relu')
+    unit_test_layer(your_layer)
+
+    your_layer = Layer((60, 100), 'tanh')
+    unit_test_layer(your_layer)
+
     plt.ion()
     bat_classification()
     mnist_classification()
 
-    pdb.set_trace()
+    # pdb.set_trace()
