@@ -43,6 +43,6 @@ function toMathString(n) {
 	// expected: 8388608 , which is 10...0 (23 zeros)
 	var mathRep = toBinaryStr(toBits(sig, 24)) + 'E' 
 			+ expSign 
-			+ toBits(expVal, 8).join('').replace(/^0+/,'');
+			+ toBits(Math.abs(expVal), 8).join('').replace(/^0+/,'');
 	return mathRep;
 }

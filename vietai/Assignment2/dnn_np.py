@@ -13,7 +13,7 @@ import pdb
 
 
 class Config(object):
-    def __init__(self, num_epoch=1000, batch_size=100, learning_rate=0.0005, momentum_rate=0.9, epochs_to_draw=10, reg=0.00015, num_train=1000, visualize=True):
+    def __init__(self, num_epoch=1000, batch_size=101, learning_rate=0.0005, momentum_rate=0.9, epochs_to_draw=10, reg=0.00015, num_train=1000, visualize=True):
         self.num_epoch = num_epoch
         self.batch_size = batch_size
         self.learning_rate = learning_rate
@@ -77,6 +77,7 @@ class Layer(object):
             w_grad = reLU_grad(self.forward(x)) 
 
         delta = np.multiply(delta_prev, w_grad)
+        print ('shape x = ', x.shape, ' shape delta = ', delta.shape)
         w_grad = np.matmul(np.transpose(x), delta)        
         # [TODO 1.4] Implement L2 regularization on weights here
         w_grad +=  self.reg * self.w 
@@ -151,6 +152,7 @@ class NeuralNet(object):
         # [TODO 1.5] Compute delta factor from the output
         delta = all_x[-1] - y
         delta /= y.shape[0]
+        print('last delta shape = ', delta.shape)
         
         # [TODO 1.5] Compute gradient of the loss function with respect to w of softmax layer, use delta from the output        
         grad_last = np.matmul(np.transpose(all_x[-2]), delta)
@@ -163,6 +165,7 @@ class NeuralNet(object):
             layer = self.layers[i]
             x = all_x[i]
             # [TODO 1.5] Compute delta_prev factor for previous layer (in backpropagation direction)
+            print('last layer shape = ', prev_layer.w.shape)
             delta_prev = np.matmul(delta, np.transpose(prev_layer.w))
 	        # Use delta_prev to compute delta factor for the next layer (in backpropagation direction)
             grad_w, delta = layer.backward(x, delta_prev)
@@ -207,6 +210,8 @@ def test(s, test_y):
     """
     if (s.ndim == 2):
         y_hat = np.argmax(s, axis=1)
+    else:
+        y_hat = s
     num_class = np.unique(test_y).size
     confusion_mat = np.zeros((num_class, num_class))
 
