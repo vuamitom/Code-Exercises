@@ -77,7 +77,7 @@ class Layer(object):
             w_grad = reLU_grad(self.forward(x)) 
 
         delta = np.multiply(delta_prev, w_grad)
-        print ('shape x = ', x.shape, ' shape delta = ', delta.shape)
+        # print ('shape x = ', x.shape, ' shape delta = ', delta.shape)
         w_grad = np.matmul(np.transpose(x), delta)        
         # [TODO 1.4] Implement L2 regularization on weights here
         w_grad +=  self.reg * self.w 
@@ -152,7 +152,7 @@ class NeuralNet(object):
         # [TODO 1.5] Compute delta factor from the output
         delta = all_x[-1] - y
         delta /= y.shape[0]
-        print('last delta shape = ', delta.shape)
+        # print('last delta shape = ', delta.shape)
         
         # [TODO 1.5] Compute gradient of the loss function with respect to w of softmax layer, use delta from the output        
         grad_last = np.matmul(np.transpose(all_x[-2]), delta)
@@ -165,7 +165,7 @@ class NeuralNet(object):
             layer = self.layers[i]
             x = all_x[i]
             # [TODO 1.5] Compute delta_prev factor for previous layer (in backpropagation direction)
-            print('last layer shape = ', prev_layer.w.shape)
+            # print('last layer shape = ', prev_layer.w.shape)
             delta_prev = np.matmul(delta, np.transpose(prev_layer.w))
 	        # Use delta_prev to compute delta factor for the next layer (in backpropagation direction)
             grad_w, delta = layer.backward(x, delta_prev)

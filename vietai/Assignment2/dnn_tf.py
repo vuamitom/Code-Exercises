@@ -181,5 +181,5 @@ if __name__ == '__main__':
     np.random.seed(2017) 
 
     plt.ion()
-    # bat_classification()
+    bat_classification()
     mnist_classification()
