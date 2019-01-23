@@ -1,0 +1,7 @@
+build
+gen-*
+*.cmake
+CMakeFiles
+CMakeCache.txt
+.idea
+Makefile
