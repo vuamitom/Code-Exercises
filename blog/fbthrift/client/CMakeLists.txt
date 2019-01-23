@@ -13,7 +13,7 @@ option(USE_O2 "Use -O2 instead of the default -O3" OFF)
 
 FILE(GLOB FBGEN "../gen-cpp2/*.cpp")
 add_executable(test_client
-	test.cc	
+	test_future.cc	
     ${FBGEN}
 )
 

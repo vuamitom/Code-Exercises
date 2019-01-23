@@ -11,7 +11,7 @@
 #include <thrift/lib/cpp2/async/RocketClientChannel.h>
 #include <thrift/lib/cpp2/async/RSocketClientChannel.h>
 #include <vector>
-#include "./ExampleHandler.h"
+#include "../ExampleHandler.h"
 
 
 using apache::thrift::ThriftServer;
@@ -103,23 +103,10 @@ int main(int argc, char *argv[]) {
 	LOG(INFO) << "Starting test ...";
 	FLAGS_logtostderr = 1;	
 	folly::init(&argc, &argv);
-		
-	// starting server on a separate thread
-	std::thread server_thread([] {	    
-	    auto server = newServer(thrift_port);
-	    LOG(INFO) << "server: starts";	    
-		server->serve();
-	});
-	server_thread.detach();
 
-	// wait for a short while 
-	// enough for socket opening 
-	std::this_thread::sleep_for(std::chrono::milliseconds(50));
-
-	// create event runloop, to run on this thread
+	// creating client
 	folly::EventBase eb;
 	folly::SocketAddress addr("127.0.0.1", thrift_port);
-	// creating client
 	auto client = newHeaderClient(&eb, addr);
 	std::vector<folly::Future<folly::Unit>> futs;
 	for (int32_t i = 10; i < 14; i++) {
@@ -131,9 +118,7 @@ int main(int argc, char *argv[]) {
 		LOG(INFO) << "client: received all responses";
 		eb.terminateLoopSoon();
 	});
-
-	// libevent/epoll loop which keeps main thread from existing.
 	eb.loopForever();
-	
+		
 	return 0;
 }
