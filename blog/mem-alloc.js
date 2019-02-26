@@ -51,7 +51,7 @@ function stringConcatenate() {
 
     dur = time(() => {
         // ar.forEach(a => a)
-        let a = [size];
+        let a = new Array(size);
         for (let i = 0; i < size; i++)
             a[i] = 'a'
         a = a.join('');
