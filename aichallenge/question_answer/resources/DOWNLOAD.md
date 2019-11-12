@@ -1,0 +1,1 @@
+Download model file from https://github.com/mailong25/bert-vietnamese-question-answering
