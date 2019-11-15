@@ -5,7 +5,6 @@ stopwords = set([w.replace(' ','_') for w in stopwords])
 punct_set = set(["... ",".. "])
 max_punct_len = max([len(x) for x in punct_set])
 min_punct_len = min([len(x) for x in punct_set])
-['b', 'c', 'd' , 'đ', 'f', 'g', 'h', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'x', 'y', 'z']
 
 def _check_missing_punct(text):
     toks = []
@@ -50,12 +49,19 @@ def _check_missing_punct(text):
     else:
         return [text]
 
-def tokenize_sentence(text):
+def tokenize_sentence(text, crude = None):
     sens = sent_tokenize(text)
     final = []
     for sen in sens:
         retok = _check_missing_punct(sen)
         final += retok
+
+    # if crude is not None and len(final) < 2:
+    #     for p in crude:
+    #         final = []
+    #         for sen in sens:
+    #             final += sen.split('.')
+    #         final = [s for s in final if len(s) > 0]
     return final
 
 if __name__ == '__main__':

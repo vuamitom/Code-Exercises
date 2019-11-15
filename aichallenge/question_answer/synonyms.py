@@ -103,5 +103,6 @@ def generateVariants(untokenize_text):
     return combinations
 
 if __name__ == '__main__':
-    print(generateVariants('Quang Hải giành được chức vô địch U21 quốc gia năm bao nhiêu tuổi'))
+    print(generateVariants('Đạo Hồi xuất phát từ quốc gia nào'))
+    print(generateVariants('Bức tranh Mona Lisa hiện đang được trưng bày ở đâu'))
     # generateVariants('Năm 2013 , Nguyễn Quang Hải giành chức vô địch U21 quốc gia 2013 cùng với đội trẻ Hà Nội T&T và tạo nên cú sốc khi trở thành cầu thủ 16 tuổi đầu tiên giành được danh hiệu vô địch U21 quốc gia .')
