@@ -32,6 +32,7 @@ class LogisticClassifier(object):
         # [TODO 1.5]
         # Compute feedforward result
         y = x.dot(self.w)
+        ########## learning from tensorflow source ###################
         # to avoid overflow
         # sigmoid(y) = min(0, y) * (e**y / ( e** y + 1) + max(0, y) * (1 / (1 + e ** -y))
         #            = (1{y < 0} else e**-abs(y)) * ( 1 / (1 + e ** - abs(y)))
@@ -55,6 +56,7 @@ class LogisticClassifier(object):
 
         loss = 0 - np.mean(np.multiply(y, np.log(y_hat)) + np.multiply(1 - y, np.log( 1 - y_hat)))
 
+        ########## learning from tensorflow source ###################
         # avoid log, as if y_hat close to zero, np.log is close to neg infinity
         # expand the formula to become 
         # loss = 1/m * (log (1 + e^(-abs(z))) + max (z, 0) - y*z )

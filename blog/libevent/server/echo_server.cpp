@@ -52,6 +52,7 @@ static void
 listener_cb(struct evconnlistener *listener, evutil_socket_t fd,
     struct sockaddr *sa, int socklen, void *user_data)
 {
+	printf("listener_cb\n");
 	struct event_base *base = (event_base *)user_data;
 	struct bufferevent *bev;
 

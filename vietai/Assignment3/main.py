@@ -152,6 +152,7 @@ def create_sentence_matrix():
 from random import randint
 
 def getTrainBatch():
+    ids = np.load(os.path.join(currentDir, 'idsMatrix.npy'))
     labels = []
     arr = np.zeros([batchSize, maxSeqLength])
     for i in range(batchSize):
@@ -167,6 +168,7 @@ def getTrainBatch():
     return arr, labels
 
 def getTestBatch():
+    ids = np.load(os.path.join(currentDir, 'idsMatrix.npy'))
     labels = []
     arr = np.zeros([batchSize, maxSeqLength])
     for i in range(batchSize):
@@ -206,18 +208,20 @@ def generate_a_lstm_layer():
 # Stack các LSTM layer với hàm tf.nn.rnn_cell.MultiRNNCell
 stacked_lstm = tf.nn.rnn_cell.MultiRNNCell([generate_a_lstm_layer() for _ in range(0, 2)])
 # Feed data variable vào mạng LSTM sử dụng hàm tf.nn.dynamic_rnn
-outputs, state = tf.nn.dynamic_rnn(stacked_lstm, inputs, dtype=tf.float32)
+outputs, state = tf.nn.dynamic_rnn(stacked_lstm, data, dtype=tf.float32)
 print(outputs)
 
 weight = tf.Variable(tf.truncated_normal([lstmUnits, numClasses]))
 bias = tf.Variable(tf.constant(0.1, shape=[numClasses]))
 
-# Lấy giá trị output tại LSTM cell cuối cùng
+# Lấy giá trị output tại LSTM cell cuối cùng (it's more like taking output of last input word to LSTM)
 outputs = tf.transpose(outputs, [1, 0, 2])
-last = tf.gather(outputs, int(value.get_shape()[0]) - 1)
+print(outputs)
+last = tf.gather(outputs, int(outputs.get_shape()[0]) - 1)
+print(last)
 # Đưa qua mạng Fully Connected mà không có activation function
 prediction = (tf.matmul(last, weight) + bias)
-
+print(prediction)
 # Để xác định độ chính xác của hệ thống, ta đếm số lượng labels khớp với giá trị dự đoán (prediction). Sau đó tính độ chính xác bằng cách tính giá trị trung bình của các kết quả trả về đúng.
 correctResult = tf.equal(tf.argmax(prediction,1), tf.argmax(labels,1))
 accuracy = tf.reduce_mean(tf.cast(correctResult, tf.float32))
@@ -228,7 +232,7 @@ optimizer = tf.train.AdamOptimizer().minimize(loss)
 
 
 def train():
-    iterations = 100
+    iterations = 1
     tf.summary.scalar('Loss', loss)
     tf.summary.scalar('Accuracy', accuracy)
     merged = tf.summary.merge_all()
@@ -247,7 +251,7 @@ def train():
         sess.run(optimizer, feed_dict={inputs: nextBatch, labels: nextBatchLabels})
         #Write summary to Tensorboard
         if (i % 50 == 0):
-            summary = sess.run(merged, {input_data: nextBatch, labels: nextBatchLabels})
+            summary = sess.run(merged, {inputs: nextBatch, labels: nextBatchLabels})
             writer.add_summary(summary, i)
 
         # Save model every 2000 training iterations
@@ -270,7 +274,7 @@ def evaluate():
 
 def emotion_classify(sentence):
     cleanedLine = cleanSentences(sentence)
-    ids = np.zeros([1, maxSeqLength])
+    ids = np.zeros([batchSize, maxSeqLength])
     split = cleanedLine.split()
     nIndexes = 0
     for word in split:
@@ -289,6 +293,7 @@ def emotion_classify(sentence):
     saver.restore(sess, tf.train.latest_checkpoint(os.path.join(currentDir,'models')))
 
     result = sess.run(prediction, feed_dict={inputs:ids})
-    print('prediction result: ', result)
+    # print('result: ', result)
+    print('prediction result: ', 'positive' if np.argmax(result[0]) == 0 else 'negative')
 
-train()
+emotion_classify('Món này ăn ngon mê ly luôn. Vị ngọt và thơm quá trời quá đất.')

@@ -11,6 +11,14 @@ repositories {
     mavenCentral()
 }
 
+sourceSets {
+    main {
+        java {
+            srcDirs 'src/main/java'
+        }
+    }
+}
+
 dependencies {
     testCompile group: 'com.google.re2j', name: 're2j', version: '1.2'
     testCompile group: 'dk.brics', name: 'automaton', version: '1.12-1'

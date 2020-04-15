@@ -99,7 +99,7 @@ def generateVariants(untokenize_text):
         num_variants = functools.reduce(lambda x, y: x*y, [len(c) for c in combinations])
      
     combinations = list(itertools.product(*combinations))
-    combinations = [' '.join(e) for e in combinations]
+    combinations = [' '.join(e).replace('_', ' ') for e in combinations]
     return combinations
 
 if __name__ == '__main__':

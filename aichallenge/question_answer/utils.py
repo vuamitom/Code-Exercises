@@ -49,7 +49,7 @@ def _check_missing_punct(text):
     else:
         return [text]
 
-def tokenize_sentence(text, crude = None):
+def tokenize_sentence(text):
     sens = sent_tokenize(text)
     final = []
     for sen in sens:

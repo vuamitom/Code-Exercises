@@ -55,6 +55,7 @@ from transformers import glue_compute_metrics as compute_metrics
 from transformers import glue_output_modes as output_modes
 from transformers import glue_processors as processors
 from transformers import glue_convert_examples_to_features as convert_examples_to_features
+# from transformers import DataProcessor, InputExample
 
 logger = logging.getLogger(__name__)
 
@@ -84,12 +85,12 @@ MODEL_CLASSES = {
 #         """See base class."""
 #         logger.info("LOOKING AT {}".format(os.path.join(data_dir, "train.tsv")))
 #         return self._create_examples(
-#             self._read_tsv(os.path.join(data_dir, "train.tsv")), "train")
+#             self._read_tsv(os.path.join(data_dir, "train.tsv") , quotechar='"'), "train")
 
 #     def get_dev_examples(self, data_dir):
 #         """See base class."""
 #         return self._create_examples(
-#             self._read_tsv(os.path.join(data_dir, "dev.tsv")), "dev")
+#             self._read_tsv(os.path.join(data_dir, "dev.tsv"), quotechar='"'), "dev")
 
 #     def get_labels(self):
 #         """See base class."""
@@ -295,6 +296,7 @@ def evaluate(args, model, tokenizer, prefix=""):
 
 
         eval_loss = eval_loss / nb_eval_steps
+        logits = preds 
         if args.output_mode == "classification":
             preds = np.argmax(preds, axis=1)
         elif args.output_mode == "regression":
@@ -313,9 +315,22 @@ def evaluate(args, model, tokenizer, prefix=""):
         output_preds_file = os.path.join(eval_output_dir, prefix, "pred_results.txt")
         with open(output_preds_file, 'w') as writer:
             logger.info("**** predictions ****")
-            print(preds)
+            # print(preds)
             for o in preds:
                 writer.write('%s\n' % (str(o),))  
+
+        # write logits 
+        # do softmax 
+        logits = np.exp(logits)
+        ax_sum = np.expand_dims(np.sum(logits, axis=1), axis=1)
+        logits = logits / ax_sum
+        output_oof_file = os.path.join(eval_output_dir, prefix, 'oof.txt')        
+        with open(output_oof_file, 'w') as writer:
+            logger.info('**** oof ****')
+            print (logits)
+            for o in logits:
+                neg, pos = o
+                writer.write('%s,%s\n' % (str(pos), str(neg)))
 
     return results
 

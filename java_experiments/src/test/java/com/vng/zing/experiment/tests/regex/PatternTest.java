@@ -416,6 +416,7 @@ public class PatternTest {
 //                    p.run(in);
                     AutomatonMatcher m = p.newMatcher(in);
                     m.find();
+
                 }
             }
         }

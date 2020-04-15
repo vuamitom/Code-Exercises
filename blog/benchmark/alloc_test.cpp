@@ -37,7 +37,7 @@ static Obj** create_objs_on_buf() {
 int main(int argc, char *argv[]) {
 	std::clock_t start;
     start = std::clock();
-	auto r = create_objs_on_buf();	
+	auto r = create_objs();	
 	std::cout << "Time: " << (std::clock() - start) << " ticks" << std::endl;
     return 0;
 }
