@@ -3,6 +3,10 @@
 #     def __init__(self, val=0, next=None):
 #         self.val = val
 #         self.next = next
+### NOTE
+### in this exercise, we loop through the list twice with first iteration to count number of nodes
+### There is more clever way to do this by reversing a group regardless of the number of nodes in the list. 
+### And then reverse once more for the last group if number of elements < k 
 class Solution(object):
     def reverseKGroup(self, head, k):
         """
